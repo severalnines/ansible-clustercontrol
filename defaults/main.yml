@@ -1,0 +1,82 @@
+---
+mysql_root_username: root
+mysql_root_password: password
+cmon_mysql_password: cmon
+cmon_mysql_port: 3306
+cmon_ssh_user: root
+cmon_ssh_key_path: /root/.ssh/id_rsa
+
+# ClusterControl settings
+gpg_key: http://repo.severalnines.com/severalnines-repos.asc
+clustercontrol_packages:
+  - clustercontrol-controller
+  - clustercontrol-cmonapi
+  - clustercontrol
+  - clustercontrol-nodejs
+cmon_config_file: /etc/cmon.cnf
+cmon_sql_path: /usr/share/cmon
+cmonapi_bootstrap: "{{ apache_doc_root }}/cmonapi/config/bootstrap.php"
+cmonapi_database: "{{ apache_doc_root }}/cmonapi/config/database.php"
+ccui_bootstrap: "{{ apache_doc_root }}/clustercontrol/bootstrap.php"
+
+# Set this to `yes` to forcibly update the root password.
+mysql_root_password_update: no
+
+mysql_enabled_on_startup: yes
+
+# update my.cnf. each time role is run? yes | no
+overwrite_global_mycnf: yes
+
+# MySQL connection settings.
+mysql_port: "{{ cmon_mysql_port }}"
+mysql_bind_address: '0.0.0.0'
+mysql_datadir: /var/lib/mysql
+mysql_pid_file: "{{ mysql_datadir }}/mysql.pid"
+mysql_user_home: /root
+
+# Memory settings (default values optimized ~512MB RAM).
+mysql_key_buffer_size: "256M"
+mysql_max_allowed_packet: "64M"
+mysql_table_open_cache: "256"
+mysql_sort_buffer_size: "1M"
+mysql_read_buffer_size: "1M"
+mysql_read_rnd_buffer_size: "4M"
+mysql_myisam_sort_buffer_size: "64M"
+mysql_thread_cache_size: "8"
+mysql_query_cache_size: "16M"
+mysql_max_connections: 151
+
+# Other settings.
+mysql_wait_timeout: 28800
+
+# Try number of CPU's * 2 for thread_concurrency.
+mysql_thread_concurrency: 2
+
+# InnoDB settings.
+# Set .._buffer_pool_size up to 80% of RAM but beware of setting too high.
+mysql_innodb_file_per_table: "1"
+mysql_innodb_buffer_pool_size: "256M"
+mysql_innodb_additional_mem_pool_size: "20M"
+# Set .._log_file_size to 25% of buffer pool size.
+mysql_innodb_log_file_size: "64M"
+mysql_innodb_log_buffer_size: "8M"
+mysql_innodb_flush_log_at_trx_commit: "1"
+mysql_innodb_lock_wait_timeout: 50
+
+# mysqldump settings.
+mysql_mysqldump_max_allowed_packet: "64M"
+
+# Users.
+mysql_users:
+  - name: cmon
+    host: "{{ ansible_default_ipv4.address }}"
+    password: "{{ cmon_mysql_password }}"
+    priv: "*.*:ALL,GRANT"
+  - name: cmon
+    host: "{{ ansible_fqdn }}"
+    password: "{{ cmon_mysql_password }}"
+    priv: "*.*:ALL,GRANT"
+  - name: cmon
+    host: "localhost"
+    password: "{{ cmon_mysql_password }}"
+    priv: "*.*:ALL,GRANT"

@@ -1,0 +1,6 @@
+---
+apache_doc_root: /var/www/html
+apache_config: /etc/apache2/sites-available/s9s.conf
+apache_target_config: /etc/apache2/sites-enabled/001-s9s.conf
+apache_ssl_config: /etc/apache2/sites-available/s9s-ssl.conf
+apache_target_ssl_config: /etc/apache2/sites-enabled/001-s9s-ssl.conf

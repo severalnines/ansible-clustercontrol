@@ -1,0 +1,33 @@
+---
+__mysql_daemon: mysqld
+__mysql_packages:
+  - mysql
+  - mysql-server
+__mysql_slow_query_log_file: /var/log/mysql-slow.log
+mysql_config_file: /etc/my.cnf
+mysql_config_include_dir: /etc/my.cnf.d
+mysql_socket: /var/lib/mysql/mysql.sock
+__apache_daemon: httpd
+__apache_user: apache
+__apache_packages:
+  - httpd
+  - wget
+  - mailx
+  - cronie
+  - nc
+  - bind-utils
+  - curl
+  - php
+  - php-mysql
+  - php-gd
+  - php-ldap
+  - mod_ssl
+  - openssl
+apache_doc_root: /var/www/html
+apache_config: /etc/httpd/conf/httpd.conf
+apache_ssl_config: /etc/httpd/conf.d/ssl.conf
+cert_file: /etc/pki/tls/certs/s9server.crt
+key_file: /etc/pki/tls/certs/s9server.key
+repo_config_dir: /etc/yum.repos.d
+repo_config_path: /etc/yum.repos.d/s9s-repo.repo
+repo_config_url: http://www.severalnines.com/downloads/cmon/s9s-repo.repo

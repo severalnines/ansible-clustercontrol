@@ -1,0 +1,37 @@
+---
+- name: Configure Apache mod_rewrite.
+  replace:
+    dest={{ apache_config }} regexp='AllowOverride None' replace='AllowOverride All'
+  notify: restart apache
+
+- name: Check if SSL key file is exist.
+  stat: path={{ key_file }}
+  register: ssl_key_copied
+
+- name: Check if SSL certificate file is exist.
+  stat: path={{ cert_file }}
+  register: ssl_cert_copied
+
+- name: Copy SSL key file.
+  command: mv {{ apache_doc_root}}/cmonapi/ssl/server.key {{ key_file }}
+  when: ssl_key_copied.stat.exists == false
+
+- name: Copy SSL cert file.
+  command: mv {{ apache_doc_root}}/cmonapi/ssl/server.crt {{ cert_file }}
+  when: ssl_cert_copied.stat.exists == false
+
+- name: Configure SSL key file.
+  lineinfile:
+    dest={{ apache_ssl_config }} regexp="^[ \t]*SSLCertificateKeyFile.*" line="SSLCertificateKeyFile {{ key_file }}"
+  notify: restart apache
+  when: ssl_key_copied.stat.exists == false
+
+- name: Configure SSL cert file.
+  lineinfile:
+    dest={{ apache_ssl_config }} regexp="^[ \t]*SSLCertificateFile.*" line="SSLCertificateFile {{ cert_file }}"
+  notify: restart apache
+  when: ssl_cert_copied.stat.exists == false
+
+- name: Ensure Apache is started and enabled on boot.
+  service: "name={{ apache_daemon }} state=started enabled=yes"
+  register: apache_service_configuration

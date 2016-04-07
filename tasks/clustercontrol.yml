@@ -1,0 +1,116 @@
+---
+- name: Copy cmon.cnf - ClusterControl Controller configuration.
+  template:
+    src: cmon.cnf.j2
+    dest: "{{ cmon_config_file }}"
+    owner: root
+    group: root
+    mode: 0600
+  notify: restart cmon
+
+- name: Ensure ClusterControl Controller is started and enabled on boot.
+  service: name=cmon state=started enabled=yes
+  register: cmon_service_configuration
+
+- name: Check if CMONAPI bootstrap file is exist.
+  stat: path={{ cmonapi_bootstrap }}
+  register: cmonapi_bs
+
+- name: Check if CMONAPI database file is exist.
+  stat: path={{ cmonapi_database }}
+  register: cmonapi_db
+
+- name: Check if ClusterControl bootstrap file is exist.
+  stat: path={{ ccui_bootstrap }}
+  register: ccui_bs
+
+- name: Generating ClusterControl API token.
+  shell: "python -c 'import uuid; print uuid.uuid4()' | sha1sum | cut -f1 -d' '"
+  register: api_token
+  when: cmonapi_bs.stat.exists == false
+
+- name: Installing ClusterControl API token.
+  shell: mysql -NBe "REPLACE INTO dcps.apis(id, company_id, user_id, url, token) VALUES (1, 1, 1, 'http://127.0.0.1/cmonapi', '{{ item }}')"
+  with_items:
+    - "{{  api_token.stdout_lines }}"
+  when: cmonapi_bs.stat.exists == false
+
+- name: Move CMONAPI bootstrap file.
+  command: mv "{{ cmonapi_bootstrap }}.default" {{ cmonapi_bootstrap }}
+  when: cmonapi_bs.stat.exists == false
+
+- name: Move CMONAPI database file.
+  command: mv "{{ cmonapi_database }}.default" {{ cmonapi_database }}
+  when: cmonapi_db.stat.exists == false
+
+- name: Move ClusterControl UI bootstrap file.
+  command: mv "{{ ccui_bootstrap }}.default" {{ ccui_bootstrap }}
+  when: ccui_bs.stat.exists == false
+
+- name: Configure ClusterControl CMONAPI token.
+  replace: 
+    dest={{ cmonapi_bootstrap }} regexp=GENERATED_CMON_TOKEN replace={{ item }}
+  with_items:
+    - "{{ api_token.stdout_lines }}"
+  when: cmonapi_bs.stat.exists == false
+
+- name: Configure ClusterControl CMONAPI - host value.
+  replace:
+    dest={{ cmonapi_bootstrap }} regexp='clustercontrol.severalnines.com' replace={{ ansible_default_ipv4.address }}/clustercontrol
+  when: cmonapi_bs.stat.exists == false
+
+- name: Configure ClusterControl CMONAPI - MySQL password.
+  replace:
+    dest={{ cmonapi_database }} regexp='MYSQL_PASSWORD' replace={{ cmon_mysql_password }}
+  when: cmonapi_bs.stat.exists == false
+
+- name: Configure ClusterControl CMONAPI - MySQL port.
+  replace:
+    dest={{ cmonapi_database }} regexp='MYSQL_PORT' replace={{ cmon_mysql_port }}
+  when: cmonapi_bs.stat.exists == false
+
+- name: Configure ClusterControl UI - MySQL password.
+  replace:
+    dest={{ ccui_bootstrap }} regexp=DBPASS replace={{ cmon_mysql_password }}
+  when: ccui_bs.stat.exists == false
+
+- name: Configure ClusterControl UI - MySQL port.
+  replace:
+    dest={{ ccui_bootstrap }} regexp=DBPORT replace={{ cmon_mysql_port }}
+  when: ccui_bs.stat.exists == false
+
+- name: Apply correct permission for ClusterControl UI and CMONAPI (RedHat).
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ apache_user }}"
+    group: "{{ apache_user }}"
+    recurse: yes
+  with_items:
+    - "{{ apache_doc_root }}/cmonapi"
+    - "{{ apache_doc_root }}/clustercontrol"
+  when: (ansible_os_family == 'RedHat') or (ansible_distribution == 'Debian' and ansible_distribution_major_version|int < 8) or (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int < 14)
+
+- name: Apply correct permission for ClusterControl UI and CMONAPI (Debian).
+  file:
+    path: "{{ item.dest }}"
+    src: "{{ item.src }}"
+    state: link
+    owner: "{{ apache_user }}"
+    group: "{{ apache_user }}"
+  with_items:
+    - { dest: "{{ apache_doc_root }}/cmonapi", src: "/var/www/cmonapi" }
+    - { dest: "{{ apache_doc_root }}/clustercontrol", src: "/var/www/clustercontrol" }
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 7) or (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 12)
+
+- name: Check if SSH key for user {{ cmon_ssh_user }} is exist.
+  stat: path={{ cmon_ssh_key_path }}
+  register: ssh_key_user
+
+- name: Generate SSH key for user {{ cmon_ssh_user }}.
+  user:
+    name: "{{ cmon_ssh_user }}"
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: "{{ cmon_ssh_key_path }}"
+  when: ssh_key_user.stat.exists == false

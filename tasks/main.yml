@@ -1,0 +1,65 @@
+---
+# Include variables and define needed variables.
+- name: Include OS-specific variables.
+  include_vars: "{{ ansible_os_family }}.yml"
+
+- name: Include RHEL >= 7 specific variables.
+  include_vars: "RedHat7.yml"
+  when: ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 7
+
+- name: Include Debian >= 8 specific variables.
+  include_vars: "Debian8.yml"
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 7) or (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 12)
+
+- name: Define mysql_packages.
+  set_fact:
+    mysql_packages: "{{ __mysql_packages | list }}"
+  when: mysql_packages is not defined
+
+- name: Define mysql_daemon.
+  set_fact:
+    mysql_daemon: "{{ __mysql_daemon }}"
+  when: mysql_daemon is not defined
+
+- name: Define apache_packages.
+  set_fact:
+    apache_packages: "{{ __apache_packages | list }}"
+  when: apache_packages is not defined
+
+- name: Define apache_daemon.
+  set_fact:
+    apache_daemon: "{{ __apache_daemon }}"
+  when: apache_daemon is not defined
+
+- name: Define apache_user.
+  set_fact:
+    apache_user: "{{ __apache_user }}"
+  when: apache_user is not defined
+
+# Setup/install tasks.
+- include: setup-RedHat.yml
+  when: ansible_os_family == 'RedHat'
+
+- include: setup-Debian.yml
+  when: ansible_os_family == 'Debian'
+
+- name: Check if MySQL/MariaDB packages were installed.
+  set_fact:
+    mysql_install_packages: "{{ (rh_mysql_install_packages is defined and rh_mysql_install_packages.changed) or (deb_mysql_install_packages is defined and deb_mysql_install_packages.changed) }}"
+
+- name: Check if ClusterControl packages were installed.
+  set_fact:
+    clustercontrol_install_packages: "{{ (rh_clustercontrol_install_packages is defined and rh_clustercontrol_install_packages.changed) or (deb_clustercontrol_install_packages is defined and deb_clustercontrol_install_packages.changed) }}"
+
+# Configure MySQL.
+- include: configure-mysql.yml
+- include: secure-installation.yml
+- include: users.yml
+
+- include: configure-apache-RedHat.yml
+  when: ansible_os_family == 'RedHat'
+
+- include: configure-apache-Debian.yml
+  when: ansible_os_family == 'Debian'
+
+- include: clustercontrol.yml

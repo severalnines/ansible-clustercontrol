@@ -1,0 +1,66 @@
+---
+- name: Disallow root login remotely
+  command: 'mysql -NBe "{{ item }}"'
+  with_items:
+    - DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
+  changed_when: False
+
+- name: Get list of hosts for the root user.
+  command: mysql -NBe 'SELECT Host FROM mysql.user WHERE User = "root" ORDER BY (Host="localhost") ASC'
+  register: mysql_root_hosts
+  changed_when: false
+
+- name: Check if root password has been configured.
+  stat: path="{{ mysql_user_home }}/.my.cnf"
+  register: root_password_configured 
+
+- name: Update MySQL root password for localhost root account.
+  shell: >
+    mysql -u root -NBe
+    'SET PASSWORD FOR "{{ mysql_root_username }}"@"{{ item }}" = PASSWORD("{{ mysql_root_password }}");'
+  with_items: "{{ mysql_root_hosts.stdout_lines }}"
+  when: root_password_configured.stat.exists == false
+
+# Has to be after the root password assignment, for idempotency.
+- name: Copy .my.cnf file with root password credentials.
+  template:
+    src: "user-my.cnf.j2"
+    dest: "{{ mysql_user_home }}/.my.cnf"
+    owner: root
+    group: root
+    mode: 0600
+
+- name: Get list of hosts for the anonymous user.
+  command: mysql -NBe 'SELECT Host FROM mysql.user WHERE User = ""'
+  register: mysql_anonymous_hosts
+  changed_when: false
+
+- name: Remove anonymous MySQL users.
+  mysql_user:
+     name: ""
+     host: "{{ item }}"
+     state: absent
+  with_items: "{{ mysql_anonymous_hosts.stdout_lines }}"
+
+- name: Remove MySQL test database.
+  mysql_db: "name='test' state=absent"
+
+- name: Check if ClusterControl Controller database is exist.
+  command: mysqlshow 'cmon' > /dev/null
+  register: cmon_db
+  ignore_errors: yes
+
+- name: Check if ClusterControl UI database is exist.
+  command: mysqlshow 'dcps' > /dev/null
+  register: dcps_db
+  ignore_errors: yes
+
+- name: Import ClusterControl Controller database schema.
+  shell: mysql < "{{ cmon_sql_path }}/cmon_db.sql" && mysql < "{{ cmon_sql_path }}/cmon_data.sql"
+  register: cmon_db_import
+  when: "'Unknown' in cmon_db.stderr"
+
+- name: Import ClusterControl UI database.
+  shell: mysql < {{ apache_doc_root }}/clustercontrol/sql/dc-schema.sql
+  register: ccui_db_import
+  when: "'Unknown' in dcps_db.stderr"

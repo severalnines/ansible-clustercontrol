@@ -1,0 +1,35 @@
+---
+- name: Ensure MySQL packages are installed.
+  yum: name={{ item }} state=installed
+  with_items: "{{ mysql_packages }}"
+  register: rh_mysql_install_packages
+
+- name: Ensure MySQL Python libraries are installed.
+  yum: "name=MySQL-python state=installed"
+
+- name: Ensure Apache packages are installed.
+  yum: name={{ item }} state=installed
+  with_items: "{{ apache_packages }}"
+  register: rh_apache_install_packages
+  notify: restart apache
+
+- name: Check if ClusterControl Controller is already installed.
+  stat: path=/etc/init.d/cmon
+  register: cmon_installed
+
+- name: Check if Severalnines Repository is configured.
+  stat: path={{ repo_config_path }}
+  register: s9s_repo_installed
+
+- name: Install Severalnines GPG key (yum).
+  command: rpm --import {{ gpg_key }}
+  when: s9s_repo_installed.stat.exists == true
+
+- name: Download Severalnines Repository definition.
+  command: wget {{ repo_config_url }} -P {{ repo_config_dir }}
+  when: s9s_repo_installed.stat.exists == true
+
+- name: Ensure ClusterControl packages are installed.
+  yum: name={{ item }} state=installed
+  with_items: "{{ clustercontrol_packages }}"
+  register: rh_clustercontrol_install_packages

@@ -1,0 +1,33 @@
+---
+__mysql_daemon: mysql
+__mysql_packages:
+  - mysql-common
+  - mysql-server
+  - mysql-client
+__mysql_slow_query_log_file: /var/log/mysql/mysql-slow.log
+mysql_config_file: /etc/mysql/my.cnf
+mysql_config_include_dir: /etc/mysql/conf.d
+mysql_socket: /var/run/mysqld/mysqld.sock
+__apache_daemon: apache2
+__apache_user: www-data
+__apache_packages:
+  - apache2
+  - curl
+  - dnsutils
+  - php5-common
+  - php5-mysql
+  - php5-gd
+  - php5-ldap
+  - php5-curl
+  - libapache2-mod-php5
+  - php5-json
+apache_doc_root: /var/www
+apache_config: /etc/apache2/sites-available/default
+apache_target_config: /etc/apache2/sites-enabled/000-default
+apache_ssl_config: /etc/apache2/sites-available/default-ssl
+apache_target_ssl_config: /etc/apache2/sites-enabled/000-default-ssl
+cert_file: /etc/ssl/certs/s9server.crt
+key_file: /etc/ssl/private/s9server.key
+repo_config_dir: /etc/apt/sources.list.d
+repo_config_path: /etc/apt/sources.list.d/s9s-repo.list
+repo_config_url: http://www.severalnines.com/downloads/cmon/s9s-repo.list

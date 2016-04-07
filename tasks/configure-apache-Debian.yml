@@ -1,0 +1,76 @@
+---
+- name: Copy Apache configuration template.
+  command: cp -f {{ apache_doc_root }}/clustercontrol/app/tools/apache2/s9s.conf {{ apache_config }}
+  register: s9s_conf_copied
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 7) or (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 12)
+
+- name: Copy Apache SSL configuration template.
+  command: cp -f {{ apache_doc_root }}/clustercontrol/app/tools/apache2/s9s-ssl.conf {{ apache_ssl_config }}
+  register: s9s_ssl_conf_copied
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 7) or (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 12)
+
+- name: Check if default Apache defintion is exist.
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /etc/apache2/sites-enabled/000-default.conf
+    - /etc/apache2/sites-enabled/default-ssl.conf
+    - /etc/apache2/sites-enabled/001-default-ssl.conf
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 7) or (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 12)
+
+- name: Symlink Apache configuration.
+  file:
+    path: "{{ apache_target_config }}"
+    src: "{{ apache_config }}"
+    state: link
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 7) or (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 12)
+  notify: restart apache
+
+- name: Symlink Apache SSL configuration.
+  file:
+    path: "{{ apache_target_ssl_config }}"
+    src: "{{ apache_ssl_config }}"
+    state: link
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 7) or (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 12)
+  notify: restart apache
+
+- name: Configure Apache AllowOverride.
+  replace:
+    dest={{ item }} regexp='AllowOverride None' replace='AllowOverride All'
+  with_items:
+    - "{{ apache_config }}"
+    - "{{ apache_ssl_config }}"
+  notify: restart apache
+
+- name: Check if SSL key file is exist.
+  stat: path={{ key_file }}
+  register: ssl_key_copied
+
+- name: Check if SSL certificate file is exist.
+  stat: path={{ cert_file }}
+  register: ssl_cert_copied
+
+- name: Copy SSL key file.
+  command: mv {{ apache_doc_root}}/cmonapi/ssl/server.key {{ key_file }}
+  when: ssl_key_copied.stat.exists == false
+
+- name: Copy SSL cert file.
+  command: mv {{ apache_doc_root}}/cmonapi/ssl/server.crt {{ cert_file }}
+  when: ssl_cert_copied.stat.exists == false
+
+- name: Configure SSL key file.
+  lineinfile:
+    dest={{ apache_ssl_config }} regexp="^[ \t]*SSLCertificateKeyFile.*" line="SSLCertificateKeyFile {{ key_file }}"
+  notify: restart apache
+  when: ssl_key_copied.stat.exists == false
+
+- name: Configure SSL cert file.
+  lineinfile:
+    dest={{ apache_ssl_config }} regexp="^[ \t]*SSLCertificateFile.*" line="SSLCertificateFile {{ cert_file }}"
+  notify: restart apache
+  when: ssl_cert_copied.stat.exists == false
+
+- name: Ensure Apache is started and enabled on boot.
+  service: "name={{ apache_daemon }} state=started enabled=yes"
+  register: apache_service_configuration

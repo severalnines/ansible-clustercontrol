@@ -1,0 +1,69 @@
+---
+- name: Check if MySQL is already installed.
+  stat: path=/etc/init.d/mysql
+  register: mysql_installed
+
+- name: Update apt cache if MySQL is not yet installed.
+  apt: update_cache=yes
+  when: mysql_installed.stat.exists == false
+
+- name: Ensure MySQL packages are installed.
+  apt: name={{ item }} state=installed
+  with_items: "{{ mysql_packages }}"
+  register: deb_mysql_install_packages
+
+- name: Ensure MySQL Python libraries are installed.
+  apt: "name=python-mysqldb state=installed"
+# mysql and remove the logfiles in case the user set a custom log file size.
+- name: Ensure MySQL is stopped after initial install.
+  service: name={{ mysql_daemon }} state=stopped
+  when: mysql_installed.stat.exists == false
+
+- name: Delete innodb log files created by apt package after initial install.
+  shell: "rm -f {{ mysql_datadir }}/ib_logfile[01]"
+  when: mysql_installed.stat.exists == false
+
+- name: Check if Apache is already installed.
+  stat: path=/usr/sbin/apachectl
+  register: apache_installed
+
+- name: Update apt cache if Apache is not yet installed.
+  apt: update_cache=yes
+  when: apache_installed.stat.exists == false
+
+- name: Ensure Apache packages are installed.
+  apt: name={{ item }} state=installed
+  with_items: "{{ apache_packages }}"
+  register: deb_apache_install_packages
+
+- name: Enable Apache module (ssl & rewrite).
+  apache2_module: name={{ item }} state=present
+  with_items:
+    - ssl
+    - rewrite
+  notify: restart apache
+
+- name: Check if ClusterControl Controller is already installed.
+  stat: path=/etc/init.d/cmon
+  register: cmon_installed
+
+- name: Check if Severalnines Repository is configured.
+  stat: path={{ repo_config_path }}
+  register: s9s_repo_installed
+
+- name: Install Severalnines GPG key (apt)
+  shell: wget {{ gpg_key }} -O- | apt-key add -
+  when: s9s_repo_installed.stat.exists == false
+
+- name: Download Severalnines Repository definition.
+  command: wget {{ repo_config_url }} -P {{ repo_config_dir }}
+  when: s9s_repo_installed.stat.exists == false
+
+- name: Update apt cache if ClusterControl is not yet installed.
+  apt: update_cache=yes
+  when: s9s_repo_installed.stat.exists == false
+
+- name: Ensure ClusterControl packages are installed.
+  apt: name={{ item }} state=installed
+  with_items: "{{ clustercontrol_packages }}"
+  register: deb_clustercontrol_install_packages
