@@ -124,6 +124,7 @@ Location of SSH key file generated for `cmon_ssh_user`. The value must be corres
 ## Limitations
 
 This playbook is built on top of Ansible v1.9.4 and has been tested on following platforms:
+
  - Debian 8.x (jessie)
  - Ubuntu 12.04 LTS (precise)
  - RHEL/CentOS 6/7
