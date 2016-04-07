@@ -30,23 +30,26 @@ Make sure you meet following criteria prior to the deployment:
 
 ## Usage
 
-1) Clone the repository into the Ansible control host.
+1) Get the ClusterControl Ansible role from Ansible Galaxy or Github.
 
-    git clone https://github.com/severalnines/ansible
+Ansible Galaxy:
 
-2) Copy the severalnines.clustercontrol directory into `/etc/ansible/roles`.
+    ansible-galaxy install severalnines.clustercontrol
 
-    cp -rf ansible/severalnines.clustercontrol /etc/ansible/roles
+Github:
 
-3) Create a playbook. Examples as in the Playbook section.
+    git clone https://github.com/severalnines/ansible-clustercontrol
+    cp -rf ansible-clustercontrol /etc/ansible/roles/severalnines.clustercontrol
 
-4) Run the playbook.
+2) Create a playbook. Examples in the Playbook section.
+
+3) Run the playbook.
 
     ansible-playbook cc.playbook
 
-5) Once ClusterControl is installed, go to http://[ClusterControl_IP_address]/clustercontrol and create the default admin user/password.
+4) Once ClusterControl is installed, go to http://[ClusterControl_IP_address]/clustercontrol and create the default admin user/password.
 
-6) On ClusterControl node, setup passwordless SSH key to all target DB nodes. For example, if ClusterControl node is 192.168.0.10 and DB nodes are 192.168.0.11,192.168.0.12, 192.168.0.13:
+5) On ClusterControl node, setup passwordless SSH key to all target DB nodes. For example, if ClusterControl node is 192.168.0.10 and DB nodes are 192.168.0.11,192.168.0.12, 192.168.0.13:
 
     ssh-copy-id 192.168.0.11 # DB1
     ssh-copy-id 192.168.0.12 # DB2
@@ -54,7 +57,7 @@ Make sure you meet following criteria prior to the deployment:
 
 ** Enter the password to complete the passwordless SSH setup.
 
-7) Start to deploy a new database cluster or add an existing one.
+6) Start to deploy a new database cluster or add an existing one.
 
 
 ## Example Playbook
