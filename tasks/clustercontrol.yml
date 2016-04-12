@@ -35,16 +35,16 @@
     - "{{  api_token.stdout_lines }}"
   when: cmonapi_bs.stat.exists == false
 
-- name: Move CMONAPI bootstrap file.
-  command: mv "{{ cmonapi_bootstrap }}.default" {{ cmonapi_bootstrap }}
+- name: Copy CMONAPI bootstrap file.
+  command: cp "{{ cmonapi_bootstrap }}.default" {{ cmonapi_bootstrap }}
   when: cmonapi_bs.stat.exists == false
 
-- name: Move CMONAPI database file.
-  command: mv "{{ cmonapi_database }}.default" {{ cmonapi_database }}
+- name: Copy CMONAPI database file.
+  command: cp "{{ cmonapi_database }}.default" {{ cmonapi_database }}
   when: cmonapi_db.stat.exists == false
 
-- name: Move ClusterControl UI bootstrap file.
-  command: mv "{{ ccui_bootstrap }}.default" {{ ccui_bootstrap }}
+- name: Copy ClusterControl UI bootstrap file.
+  command: cp "{{ ccui_bootstrap }}.default" {{ ccui_bootstrap }}
   when: ccui_bs.stat.exists == false
 
 - name: Configure ClusterControl CMONAPI token.
