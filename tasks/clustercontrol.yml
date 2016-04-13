@@ -62,12 +62,12 @@
 - name: Configure ClusterControl CMONAPI - MySQL password.
   replace:
     dest={{ cmonapi_database }} regexp='MYSQL_PASSWORD' replace={{ cmon_mysql_password }}
-  when: cmonapi_bs.stat.exists == false
+  when: cmonapi_db.stat.exists == false
 
 - name: Configure ClusterControl CMONAPI - MySQL port.
   replace:
     dest={{ cmonapi_database }} regexp='MYSQL_PORT' replace={{ cmon_mysql_port }}
-  when: cmonapi_bs.stat.exists == false
+  when: cmonapi_db.stat.exists == false
 
 - name: Configure ClusterControl UI - MySQL password.
   replace:
