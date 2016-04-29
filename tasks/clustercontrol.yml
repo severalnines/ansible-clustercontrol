@@ -1,16 +1,7 @@
 ---
-- name: Copy cmon.cnf - ClusterControl Controller configuration.
-  template:
-    src: cmon.cnf.j2
-    dest: "{{ cmon_config_file }}"
-    owner: root
-    group: root
-    mode: 0600
-  notify: restart cmon
-
-- name: Ensure ClusterControl Controller is started and enabled on boot.
-  service: name=cmon state=started enabled=yes
-  register: cmon_service_configuration
+- name: Check if CMON configuration file is exist.
+  stat: path={{ cmon_config_file }}
+  register: cmon_cnf
 
 - name: Check if CMONAPI bootstrap file is exist.
   stat: path={{ cmonapi_bootstrap }}
@@ -24,16 +15,29 @@
   stat: path={{ ccui_bootstrap }}
   register: ccui_bs
 
-- name: Generating ClusterControl API token.
+- name: Generating ClusterControl API/RPC token.
   shell: "python -c 'import uuid; print uuid.uuid4()' | sha1sum | cut -f1 -d' '"
   register: api_token
-  when: cmonapi_bs.stat.exists == false
+  when: clustercontrol_install_packages
+
+- name: Retrieve ClusterControl API/RPC token.
+  shell: "grep rpc_key /etc/cmon.cnf | cut -d'=' -f2"
+  register: api_token_retrieved
+  when: cmon_cnf.stat.exists == true
+
+- name: Define new API token.
+  set_fact:
+    api_rpc_token: "{{ api_token.stdout }}"
+  when: clustercontrol_install_packages
+
+- name: Define existing API token.
+  set_fact:
+    api_rpc_token: "{{ api_token_retrieved.stdout }}"
+  when: cmon_cnf.stat.exists == true
 
 - name: Installing ClusterControl API token.
-  shell: mysql -NBe "REPLACE INTO dcps.apis(id, company_id, user_id, url, token) VALUES (1, 1, 1, 'http://127.0.0.1/cmonapi', '{{ item }}')"
-  with_items:
-    - "{{  api_token.stdout_lines }}"
-  when: cmonapi_bs.stat.exists == false
+  shell: mysql -NBe "REPLACE INTO dcps.apis(id, company_id, user_id, url, token) VALUES (1, 1, 1, 'http://127.0.0.1/cmonapi', '{{ api_rpc_token }}')"
+  when: clustercontrol_install_packages
 
 - name: Copy CMONAPI bootstrap file.
   command: cp "{{ cmonapi_bootstrap }}.default" {{ cmonapi_bootstrap }}
@@ -47,37 +51,27 @@
   command: cp "{{ ccui_bootstrap }}.default" {{ ccui_bootstrap }}
   when: ccui_bs.stat.exists == false
 
-- name: Configure ClusterControl CMONAPI token.
-  replace: 
-    dest={{ cmonapi_bootstrap }} regexp=GENERATED_CMON_TOKEN replace={{ item }}
+- name: Configure ClusterControl CMONAPI - bootstrap.php.
+  shell: sed -i "s|^define('{{ item.param }}'.*|define('{{ item.param }}', '{{ item.value }}');|g" {{ cmonapi_bootstrap }}
   with_items:
-    - "{{ api_token.stdout_lines }}"
-  when: cmonapi_bs.stat.exists == false
+    - { param: "CMON_TOKEN", value: "{{ api_rpc_token }}" }
+    - { param: "CC_URL", value: "https://{{ ansible_default_ipv4.address }}/clustercontrol" }
+  when: clustercontrol_install_packages
 
-- name: Configure ClusterControl CMONAPI - host value.
-  replace:
-    dest={{ cmonapi_bootstrap }} regexp='clustercontrol.severalnines.com' replace={{ ansible_default_ipv4.address }}/clustercontrol
-  when: cmonapi_bs.stat.exists == false
+- name: Configure ClusterControl CMONAPI - database.php.
+  shell: sed -i "s|^define('{{ item.param }}'.*|define('{{ item.param }}', '{{ item.value }}');|g" {{ cmonapi_database }}
+  with_items:
+    - { param: "DB_PASS", value: "{{ cmon_mysql_password }}" }
+    - { param: "DB_PORT", value: "{{ cmon_mysql_port }}" }
+  when: clustercontrol_install_packages
 
-- name: Configure ClusterControl CMONAPI - MySQL password.
-  replace:
-    dest={{ cmonapi_database }} regexp='MYSQL_PASSWORD' replace={{ cmon_mysql_password }}
-  when: cmonapi_db.stat.exists == false
-
-- name: Configure ClusterControl CMONAPI - MySQL port.
-  replace:
-    dest={{ cmonapi_database }} regexp='MYSQL_PORT' replace={{ cmon_mysql_port }}
-  when: cmonapi_db.stat.exists == false
-
-- name: Configure ClusterControl UI - MySQL password.
-  replace:
-    dest={{ ccui_bootstrap }} regexp=DBPASS replace={{ cmon_mysql_password }}
-  when: ccui_bs.stat.exists == false
-
-- name: Configure ClusterControl UI - MySQL port.
-  replace:
-    dest={{ ccui_bootstrap }} regexp=DBPORT replace={{ cmon_mysql_port }}
-  when: ccui_bs.stat.exists == false
+- name: Configure ClusterControl UI - bootstrap.php.
+  shell: sed -i "s|^define('{{ item.param }}'.*|define('{{ item.param }}', '{{ item.value }}');|g" {{ ccui_bootstrap }}
+  with_items:
+    - { param: "DB_PASS", value: "{{ cmon_mysql_password }}" }
+    - { param: "DB_PORT", value: "{{ cmon_mysql_port }}" }
+    - { param: "RPC_TOKEN", value: "{{ api_rpc_token }}" }
+  when: clustercontrol_install_packages
 
 - name: Apply correct permission for ClusterControl UI and CMONAPI (RedHat).
   file:
@@ -114,3 +108,16 @@
     ssh_key_bits: 2048
     ssh_key_file: "{{ cmon_ssh_key_path }}"
   when: ssh_key_user.stat.exists == false
+
+- name: Copy cmon.cnf - ClusterControl Controller configuration.
+  template:
+    src: cmon.cnf.j2
+    dest: "{{ cmon_config_file }}"
+    owner: root
+    group: root
+    mode: 0600
+  notify: restart cmon
+
+- name: Ensure ClusterControl Controller is started and enabled on boot.
+  service: name=cmon state=started enabled=yes
+  register: cmon_service_configuration

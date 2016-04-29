@@ -36,7 +36,7 @@
   with_items: "{{ apache_packages }}"
   register: deb_apache_install_packages
 
-- name: Enable Apache module (ssl & rewrite).
+- name: Enable Apache module (ssl and rewrite).
   apache2_module: name={{ item }} state=present
   with_items:
     - ssl
@@ -61,7 +61,6 @@
 
 - name: Update apt cache if ClusterControl is not yet installed.
   apt: update_cache=yes
-  when: s9s_repo_installed.stat.exists == false
 
 - name: Ensure ClusterControl packages are installed.
   apt: name={{ item }} state=installed

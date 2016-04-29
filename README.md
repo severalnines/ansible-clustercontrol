@@ -49,7 +49,7 @@ Github:
 
 4) Once ClusterControl is installed, go to http://[ClusterControl_IP_address]/clustercontrol and create the default admin user/password.
 
-5) On ClusterControl node, setup passwordless SSH key to all target DB nodes. For example, if ClusterControl node is 192.168.0.10 and DB nodes are 192.168.0.11,192.168.0.12, 192.168.0.13:
+5) On ClusterControl node, setup passwordless SSH key to all target DB nodes. For example, if ClusterControl node is 192.168.0.10 and DB nodes are 192.168.0.11,192.168.0.12 and 192.168.0.13:
 
     ssh-copy-id 192.168.0.11 # DB1
     ssh-copy-id 192.168.0.12 # DB2
@@ -99,7 +99,7 @@ Available variables are listed below, along with default values (see `defaults/m
 
     mysql_root_password: password
 
-The MySQL root user account password.
+The MySQL root user account password. ClusterControl will setup the MySQL root user with this password during the installation.
 
     mysql_root_username: root
 
@@ -107,7 +107,7 @@ The MySQL super user account username. It's recommended to keep the default.
 
     cmon_mysql_password: cmon
 
-The MySQL password for user 'cmon'.
+The MySQL password for user 'cmon'. ClusterControl requires this MySQL user to access the CMON database.
 
     cmon_mysql_port: 3306
 
@@ -119,7 +119,7 @@ ClusterControl will generate an SSH key for this user.
 
     cmon_ssh_key_path: /root/.ssh/id_rsa
 
-Location of SSH key file generated for `cmon_ssh_user`. The value must be corresponding to the user. For non-root user, specify `/home/[user]/.ssh/id_rsa`
+Location of SSH key file generated for `cmon_ssh_user`. The default value is /root/.ssh/id_rsa corresponds to the default cmon_ssh_user. For non-root user, specify `/home/[user]/.ssh/id_rsa` instead.
 
 ## Limitations
 

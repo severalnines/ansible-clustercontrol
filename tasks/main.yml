@@ -47,6 +47,10 @@
   set_fact:
     mysql_install_packages: "{{ (rh_mysql_install_packages is defined and rh_mysql_install_packages.changed) or (deb_mysql_install_packages is defined and deb_mysql_install_packages.changed) }}"
 
+- name: Check if Apache packages were installed.
+  set_fact:
+    apache_install_packages: "{{ (rh_apache_install_packages is defined and rh_apache_install_packages.changed) or (deb_apache_install_packages is defined and deb_apache_install_packages.changed) }}"
+
 - name: Check if ClusterControl packages were installed.
   set_fact:
     clustercontrol_install_packages: "{{ (rh_clustercontrol_install_packages is defined and rh_clustercontrol_install_packages.changed) or (deb_clustercontrol_install_packages is defined and deb_clustercontrol_install_packages.changed) }}"

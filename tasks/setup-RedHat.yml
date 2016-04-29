@@ -23,13 +23,13 @@
 
 - name: Install Severalnines GPG key (yum).
   command: rpm --import {{ gpg_key }}
-  when: s9s_repo_installed.stat.exists == true
+  when: s9s_repo_installed.stat.exists == false
 
 - name: Download Severalnines Repository definition.
   command: wget {{ repo_config_url }} -P {{ repo_config_dir }}
-  when: s9s_repo_installed.stat.exists == true
+  when: s9s_repo_installed.stat.exists == false
 
 - name: Ensure ClusterControl packages are installed.
-  yum: name={{ item }} state=installed
+  yum: name={{ item }} state=installed update_cache=yes
   with_items: "{{ clustercontrol_packages }}"
   register: rh_clustercontrol_install_packages
