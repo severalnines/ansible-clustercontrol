@@ -14,7 +14,7 @@
   notify: restart apache
 
 - name: Check if ClusterControl Controller is already installed.
-  stat: path=/etc/init.d/cmon
+  stat: path=/etc/sbin/cmon
   register: cmon_installed
 
 - name: Check if Severalnines Repository is configured.
