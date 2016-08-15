@@ -77,13 +77,13 @@ The following playbook will install ClusterControl on 192.168.55.100, setup pass
   - { role: severalnines.clustercontrol }
   vars:
     cc_admin:
-      - email: "acop@email.com"
+      - email: "admin@email.com"
         password: "test123"
     cc_license:
-      - email: "ashraf@severalnines.com"
+      - email: "demo@severalnines.com"
         company: "Severalnines"
         expired_date: "31/12/2016"
-        key: "14359875617895464638"
+        key: "XXXXXXXXXXXXXXXXXXXX"
 
 - hosts:
     - mysql-replication
@@ -158,7 +158,7 @@ The following playbook will install ClusterControl on 192.168.55.100, setup pass
  - dbnodes - For all managed nodes to setup passwordless SSH
  - deploy-database - To deploy database after ClusterControl is installed
 
-Variables are mostly similar as the key in JSON job command inside Global Job in ClusterControl. If a key:value is not specified, the default value is used.
+Variables are mostly similar to keys in JSON job command created in ClusterControl's Cluster Job. If a key:value is not specified, the default value is used.
 
 If you are running as another user, ensure the user has ability to escalate as super user via sudo. Example playbook for Ubuntu 12.04 with sudo password enabled:
 
