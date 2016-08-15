@@ -18,26 +18,83 @@
 - name: Generating ClusterControl API/RPC token.
   shell: "python -c 'import uuid; print uuid.uuid4()' | sha1sum | cut -f1 -d' '"
   register: api_token
-  when: clustercontrol_install_packages
+  when:
+    clustercontrol_controller_install_packages and
+    clustercontrol_ui_install_packages
 
 - name: Retrieve ClusterControl API/RPC token.
-  shell: "grep rpc_key /etc/cmon.cnf | cut -d'=' -f2"
+  shell: "grep rpc_key {{ cmon_config_file }} | cut -d'=' -f2"
   register: api_token_retrieved
   when: cmon_cnf.stat.exists == true
 
 - name: Define new API token.
   set_fact:
     api_rpc_token: "{{ api_token.stdout }}"
-  when: clustercontrol_install_packages
+  when:
+    clustercontrol_controller_install_packages and
+    clustercontrol_ui_install_packages
 
 - name: Define existing API token.
   set_fact:
     api_rpc_token: "{{ api_token_retrieved.stdout }}"
   when: cmon_cnf.stat.exists == true
 
-- name: Installing ClusterControl API token.
-  shell: mysql -NBe "REPLACE INTO dcps.apis(id, company_id, user_id, url, token) VALUES (1, 1, 1, 'http://127.0.0.1/cmonapi', '{{ api_rpc_token }}')"
-  when: clustercontrol_install_packages
+- name: Install ClusterControl API token.
+  shell: >
+    mysql -NBe
+    "REPLACE INTO dcps.apis
+    (id, company_id, user_id, url, token)
+    VALUES
+    (1, 1, 1, 'http://127.0.0.1/cmonapi', '{{ api_rpc_token }}')"
+  when:
+    clustercontrol_controller_install_packages and
+    clustercontrol_ui_install_packages
+
+- name: Configure ClusterControl admin credentials.
+  shell: >
+    mysql -NBe
+    "SET @salt := (SELECT SUBSTR(CONCAT(MD5(RAND()),MD5(RAND())),1,40));
+    REPLACE INTO dcps.users
+    (id, company_id, email, password, sa, created, salt, uuid, email_verified)
+    VALUES
+    (1, 1, '{{ item.email }}', SHA2(CONCAT(@salt,'{{ item.password }}'),256), 1, unix_timestamp(), @salt, '{{ api_rpc_token }}', 1)"
+  with_items: "{{ cc_admin }}"
+  when:
+    item.email    is defined and
+    item.password is defined and
+    api_rpc_token is defined
+
+- name: Configure ClusterControl license.
+  shell: >
+    mysql -NBe
+    "REPLACE INTO cmon.license
+    (email, company, exp_date, lickey)
+    VALUES
+    ('{{ item.email }}', '{{ item.company }}', '{{ item.expired_date }}', '{{ item.key }}')"
+  with_items: "{{ cc_license }}"
+  when:
+    item.email        is defined and
+    item.company      is defined and
+    item.expired_date is defined and
+    item.key          is defined
+
+- name: Configure ClusterControl LDAP settings.
+  shell: >
+    mysql -NBe
+    "REPLACE INTO dcps.ldap_settings
+    (id, enable_ldap_auth, host, port, login, password, base_dsn, user_dn, group_dn)
+    VALUES
+    (1, {{ item.enabled }}, '{{ item.host }}', '{{ item.port }}', '{{ item.admin_dn }}', '{{ item.admin_password }}', '{{ item.base_dn }}', '{{ item.user_dn }}', '{{ item.group_dn }}')"
+  with_items: "{{ cc_ldap }}"
+  when:
+    item.enabled        is defined and
+    item.host           is defined and
+    item.port           is defined and
+    item.admin_dn       is defined and
+    item.admin_password is defined and
+    item.base_dn        is defined and
+    item.user_dn        is defined and
+    item.group_dn       is defined
 
 - name: Copy CMONAPI bootstrap file.
   command: cp "{{ cmonapi_bootstrap }}.default" {{ cmonapi_bootstrap }}
@@ -56,14 +113,18 @@
   with_items:
     - { param: "CMON_TOKEN", value: "{{ api_rpc_token }}" }
     - { param: "CC_URL", value: "https://{{ ansible_default_ipv4.address }}/clustercontrol" }
-  when: clustercontrol_install_packages
+  when:
+    clustercontrol_controller_install_packages and
+    clustercontrol_ui_install_packages
 
 - name: Configure ClusterControl CMONAPI - database.php.
   shell: sed -i "s|^define('{{ item.param }}'.*|define('{{ item.param }}', '{{ item.value }}');|g" {{ cmonapi_database }}
   with_items:
     - { param: "DB_PASS", value: "{{ cmon_mysql_password }}" }
     - { param: "DB_PORT", value: "{{ cmon_mysql_port }}" }
-  when: clustercontrol_install_packages
+  when:
+    clustercontrol_controller_install_packages and
+    clustercontrol_ui_install_packages
 
 - name: Configure ClusterControl UI - bootstrap.php.
   shell: sed -i "s|^define('{{ item.param }}'.*|define('{{ item.param }}', '{{ item.value }}');|g" {{ ccui_bootstrap }}
@@ -71,7 +132,9 @@
     - { param: "DB_PASS", value: "{{ cmon_mysql_password }}" }
     - { param: "DB_PORT", value: "{{ cmon_mysql_port }}" }
     - { param: "RPC_TOKEN", value: "{{ api_rpc_token }}" }
-  when: clustercontrol_install_packages
+  when:
+    clustercontrol_controller_install_packages and
+    clustercontrol_ui_install_packages
 
 - name: Apply correct permission for ClusterControl UI and CMONAPI (RedHat).
   file:
@@ -83,7 +146,10 @@
   with_items:
     - "{{ apache_doc_root }}/cmonapi"
     - "{{ apache_doc_root }}/clustercontrol"
-  when: (ansible_os_family == 'RedHat') or (ansible_distribution == 'Debian' and ansible_distribution_major_version|int < 8) or (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int < 14)
+  when:
+    (ansible_os_family == 'RedHat') or
+    (ansible_distribution == 'Debian' and ansible_distribution_major_version|int < 8) or
+    (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int < 14)
 
 - name: Apply correct permission for ClusterControl UI and CMONAPI (Debian).
   file:
@@ -95,19 +161,43 @@
   with_items:
     - { dest: "{{ apache_doc_root }}/cmonapi", src: "/var/www/cmonapi" }
     - { dest: "{{ apache_doc_root }}/clustercontrol", src: "/var/www/clustercontrol" }
-  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 7) or (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 12)
+  when:
+    (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 7) or
+    (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 12)
 
-- name: Check if SSH key for user {{ cmon_ssh_user }} is exist.
+- name: Check if SSH key for user '{{ cmon_ssh_user }}' is exist.
   stat: path={{ cmon_ssh_key_path }}
   register: ssh_key_user
 
-- name: Generate SSH key for user {{ cmon_ssh_user }}.
+- name: Generate SSH key for user '{{ cmon_ssh_user }}'.
   user:
     name: "{{ cmon_ssh_user }}"
     generate_ssh_key: yes
     ssh_key_bits: 2048
     ssh_key_file: "{{ cmon_ssh_key_path }}"
+  register: ssh_key_generate
+  when:
+    ssh_key_user.stat.exists == false
+
+- name: Retrieve the SSH key for user '{{ cmon_ssh_user }}'.
+  fetch:
+    dest: "tmp/clustercontrol/key.pub"
+    src: "{{ cmon_ssh_key_path }}.pub"
+    flat: yes
+  changed_when: false
+
+- name: Authorize SSH key to itself.
+  authorized_key:
+    user: "{{ cmon_ssh_user }}"
+    key: "{{ lookup('file', 'tmp/clustercontrol/key.pub') }}"
+    state: present
+
+- name: Configure known_hosts value for itself.
+  shell: ssh-keyscan -H {{ ansible_default_ipv4.address }} >> {{ cmon_ssh_key_dir }}/known_hosts
   when: ssh_key_user.stat.exists == false
+
+- name: Remove temp local known_hosts copies.
+  local_action: file dest="tmp/clustercontrol/key.pub" state=absent
 
 - name: Copy cmon.cnf - ClusterControl Controller configuration.
   template:
