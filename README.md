@@ -56,13 +56,11 @@ Consider the following inside ``/etc/ansible/hosts``:
 [clustercontrol]
 192.168.55.100
 
-# create galera
 [galera]
 192.168.55.171
 192.168.55.172
 192.168.55.173
 
-# create new replication
 [mysql-replication]
 192.168.55.204
 192.168.55.205
