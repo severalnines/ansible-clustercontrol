@@ -1,6 +1,5 @@
 ---
 
-# Deploy ClusterControl if is_controller=true
 - include: deploy-clustercontrol.yml
   when: clustercontrol_ip_address is undefined
   tags: controller

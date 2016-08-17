@@ -1,0 +1,58 @@
+- name: Configure ClusterControl instance.
+  hosts: tag_Name_clustercontrol
+  become: true
+  user: ec2-user
+  gather_facts: true
+
+  roles:
+    - { role: severalnines.clustercontrol, tags: controller }
+
+  vars:
+    cc_admin:
+      - email: "admin@email.com"
+        password: "test123"
+    cc_license:
+      - email: "demo@severalnines.com"
+        company: "Severalnines"
+        expired_date: "31/12/2016"
+        key: "XXXXXXXXXXXXXXXXXXXX"
+
+- name: Configure Galera Cluster instances.
+  hosts: tag_Name_galeracluster
+  user: ec2-user
+  become: true
+  gather_facts: true
+
+  roles:
+    - { role: severalnines.clustercontrol, tags: dbnodes }
+
+  vars:
+    clustercontrol_ip_address: "{{ hostvars[groups['tag_Name_clustercontrol'][0]]['ec2_ip_address'] }}"
+    ssh_user: root
+
+- name: Create the Galera cluster.
+  hosts: tag_Name_clustercontrol
+  become: true
+  user: ec2-user
+
+  roles:
+    - { role: severalnines.clustercontrol, tags: deploy-database }
+
+  vars:
+    cc_cluster:
+      - deployment: true
+        operation: "create"
+        cluster_type: "galera"
+        mysql_cnf_template: "my.cnf.galera"
+        mysql_datadir: "/var/lib/mysql"
+        mysql_hostnames:
+          - "{{ hostvars[groups['tag_Name_galeracluster'][0]]['ec2_ip_address'] }}"
+          - "{{ hostvars[groups['tag_Name_galeracluster'][1]]['ec2_ip_address'] }}"
+          - "{{ hostvars[groups['tag_Name_galeracluster'][2]]['ec2_ip_address'] }}"
+        mysql_password: "password"
+        mysql_port: 3306
+        mysql_version: "5.6"
+        ssh_keyfile: "/root/.ssh/id_rsa"
+        ssh_user: "root"
+        sudo_password: ""
+        vendor: "percona"

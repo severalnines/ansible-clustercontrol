@@ -50,6 +50,8 @@ Github (master and devel branch):
 
 ## Example Playbook
 
+**Note: We also provide example playbook under ``examples`` directory.**
+
 Consider the following inside ``/etc/ansible/hosts``:
 
 ```

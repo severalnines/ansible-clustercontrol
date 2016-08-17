@@ -1,0 +1,83 @@
+## Install ClusterControl
+- hosts: clustercontrol
+  roles:
+  - { role: severalnines.clustercontrol, tags: controller }
+  vars:
+    cc_admin:
+      - email: "admin@email.com"
+        password: "test123"
+    cc_license:
+      - email: "demo@severalnines.com"
+        company: "Severalnines"
+        expired_date: "31/12/2016"
+        key: "XXXXXXXXXXXXXXXXXXXX"
+
+# Setup passwordless SSH to managed nodes
+- hosts:
+    - mysql-replication
+    - galera
+  roles:
+    - { role: severalnines.clustercontrol, tags: dbnodes }
+  vars:
+    clustercontrol_ip_address: 192.168.55.100
+    ssh_user: root
+
+# DB/Cluster deployment
+- hosts: clustercontrol
+  roles:
+    - { role: severalnines.clustercontrol, tags: deploy-database }
+  vars:
+    cc_cluster:
+      # deployment=true will always send job to CMON. Set to false once deployed
+      # example create new replication. first node is the master
+      - deployment: true
+        operation: "create"
+        cluster_type: "replication"
+        mysql_hostnames:
+          - '192.168.55.204'
+          - '192.168.55.205'
+        mysql_cnf_template: "my.cnf.repl57"
+        mysql_datadir: "/var/lib/mysql"
+        mysql_password: "rootpassword"
+        mysql_port: 3306
+        mysql_version: "5.7"
+        ssh_keyfile: "/root/.ssh/id_rsa"
+        ssh_port: "22"
+        ssh_user: "root"
+        sudo_password: ""
+        type: "mysql"
+        vendor: "percona"
+      # example add existing galera
+      - deployment: true
+        operation: "add"
+        cluster_type: "galera"
+        mysql_password: "password"
+        mysql_hostnames:
+          - '192.168.55.171'
+          - '192.168.55.172'
+          - '192.168.55.173'
+        ssh_keyfile: "/root/.ssh/id_rsa"
+        ssh_port: 22
+        ssh_user: root
+        vendor: percona
+        sudo_password: ""
+        galera_version: "3.x"
+        enable_node_autorecovery: true
+        enable_cluster_autorecovery: true
+      # example create new galera
+      - deployment: true
+        operation: "create"
+        cluster_type: "galera"
+        mysql_cnf_template: "my.cnf.galera"
+        mysql_datadir: "/var/lib/mysql"
+        mysql_hostnames:
+          - '192.168.55.187'
+          - '192.168.55.160'
+          - '192.168.55.161'
+        mysql_password: "password"
+        mysql_port: 3306
+        mysql_version: "5.6"
+        ssh_keyfile: "/root/.ssh/id_rsa"
+        ssh_user: "root"
+        sudo_password: ""
+        vendor: "percona"
