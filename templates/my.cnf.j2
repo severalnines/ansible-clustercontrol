@@ -11,6 +11,7 @@ pid-file = {{ mysql_pid_file }}
 log-error = error.log
 
 symbolic-links = 0
+skip-name-resolve
 
 # User is ignored when systemd is used (fedora >= 15).
 user = mysql
@@ -21,16 +22,14 @@ table_open_cache = {{ mysql_table_open_cache }}
 sort_buffer_size = {{ mysql_sort_buffer_size }}
 read_buffer_size = {{ mysql_read_buffer_size }}
 read_rnd_buffer_size = {{ mysql_read_rnd_buffer_size }}
-myisam_sort_buffer_size = {{ mysql_myisam_sort_buffer_size }}
 thread_cache_size = {{ mysql_thread_cache_size }}
-query_cache_size = {{ mysql_query_cache_size }}
 max_connections = {{ mysql_max_connections }}
 wait_timeout = {{ mysql_wait_timeout }}
 thread_concurrency = {{ mysql_thread_concurrency }}
 
 # InnoDB settings.
 innodb_file_per_table = {{ mysql_innodb_file_per_table }}
-innodb_buffer_pool_size = {{ ansible_memtotal_mb/2 }}M
+innodb_buffer_pool_size = {{ ansible_memtotal_mb/2 | round | int }}M
 innodb_additional_mem_pool_size = {{ mysql_innodb_additional_mem_pool_size }}
 innodb_log_file_size = {{ mysql_innodb_log_file_size }}
 innodb_log_buffer_size = {{ mysql_innodb_log_buffer_size }}

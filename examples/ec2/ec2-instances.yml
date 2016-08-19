@@ -6,9 +6,9 @@
     - name: Provision ClusterControl node
       ec2:
         count: 1
-        region: ap-southeast-1
-        zone: ap-southeast-1b
-        key_name: ashrafawskey
+        region: us-east-1
+        zone: us-east-1a
+        key_name: mykeypair
         group: default
         instance_type: t2.medium
         image: ami-3f03c55c
@@ -24,16 +24,14 @@
         assign_public_ip: yes
         instance_tags:
           Name: clustercontrol
-          role: clustercontrol
           set: clustercontrol
-      register: clustercontrol_ec2
 
     - name: Provision Galera nodes
       ec2:
         count: 3
-        region: ap-southeast-1
-        zone: ap-southeast-1b
-        key_name: ashrafawskey
+        region: us-east-1
+        zone: us-east-1a
+        key_name: mykeypair
         group: default
         instance_type: t2.medium
         image: ami-3f03c55c
@@ -49,6 +47,4 @@
         assign_public_ip: yes
         instance_tags:
           Name: galeracluster
-          role: galeracluster
           set: galeracluster
-      register: galeracluster_ec2
