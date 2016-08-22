@@ -24,7 +24,8 @@
         assign_public_ip: yes
         instance_tags:
           Name: clustercontrol
-          set: clustercontrol
+          set: ansible
+          group: clustercontrol
 
     - name: Provision Galera nodes
       ec2:
@@ -38,7 +39,7 @@
         wait: yes
         wait_timeout: 500
         volumes:
-          - device_name: /dev/sdf
+          - device_name: /dev/sda1
             device_type: standard
             volume_size: 20
             delete_on_termination: true
@@ -47,4 +48,5 @@
         assign_public_ip: yes
         instance_tags:
           Name: galeracluster
-          set: galeracluster
+          set: ansible
+          group: galeracluster
