@@ -1,4 +1,4 @@
-# Ansible Role: ClusterControl (DEVELOPMENT BRANCH)
+# Ansible Role: ClusterControl
 
 Installs and configures Severalnines ClusterControl on RHEL/CentOS or Debian/Ubuntu servers. It also supports create/add existing database cluster into ClusterControl automatically.
 
@@ -38,19 +38,12 @@ Ansible Galaxy (always stable from master branch):
 ansible-galaxy install severalnines.clustercontrol
 ```
 
-Github (master and devel branch):
+Github:
 
 *(master branch)*
 
 ```bash
 git clone https://github.com/severalnines/ansible-clustercontrol
-cp -rf ansible-clustercontrol /etc/ansible/roles/severalnines.clustercontrol
-```
-
-*(development branch)*
-
-```bash
-git clone -b devel https://github.com/severalnines/ansible-clustercontrol
 cp -rf ansible-clustercontrol /etc/ansible/roles/severalnines.clustercontrol
 ```
 
