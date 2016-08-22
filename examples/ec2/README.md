@@ -69,9 +69,6 @@ Configure ``ec2-instance.yml`` and ``deploy-everything.yml`` accordingly to suit
 0) Ensure the ClusterControl role is there:
 ```bash
 ansible-galaxy install severalnines.clustercontrol
-## Update to development branch if necessary:
-# git clone -b devel https://github.com/severalnines/ansible-clustercontrol
-# cp -rf ansible-clustercontrol /etc/ansible/roles/severalnines.clustercontrol
 ```
 
 1) Create the EC2 instances:
