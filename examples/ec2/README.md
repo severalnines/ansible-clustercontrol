@@ -63,7 +63,7 @@ You should be good to go.
 
 # Deployment Steps
 
-Configure ``ec2-instance.yml`` and ``deploy-everything.yml`` accordingly to suit your needs. Then, run the playbook as the following order:
+Configure ``ec2-instance.yml`` and ``deploy-everything.yml`` accordingly to suit your needs. Then, run the playbook in the following order:
 
 
 0) Ensure the ClusterControl role is there:
