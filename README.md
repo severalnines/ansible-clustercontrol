@@ -214,21 +214,27 @@ Available variables are listed below, along with default values (see `defaults/m
 ### MySQL and CMON on ClusterControl node
 
 `mysql_root_password: password`
+
 - The MySQL root user account password. ClusterControl will setup the MySQL root user with this password during the installation.
 
 `mysql_root_username: root`
+
 - The MySQL super user account username. It's recommended to keep the default.
 
 `cmon_mysql_password: cmon`
+
 - The MySQL password for user 'cmon'. ClusterControl requires this MySQL user to access the CMON database.
 
 `cmon_mysql_port: 3306`
+
 - ClusterControl will install MySQL/MariaDB server to listen on this port, and ClusterControl applications will be configured accordingly.
 
 `cmon_ssh_user: root`
+
 - ClusterControl will generate an SSH key for this user.
 
 `cmon_ssh_key_path: /root/.ssh/id_rsa`
+
 - Location of SSH key file generated for `cmon_ssh_user`. The default value is `/root/.ssh/id_rsa` corresponds to the default cmon_ssh_user. For non-root user, specify `/home/[user]/.ssh/id_rsa` instead.
 
 ### Admin Credentials and License
@@ -254,9 +260,11 @@ Supported create new database cluster:
   - MySQL replication
 
 `deployment: true`
+
 - If true, the role will always send the deployment job to CMON regardless the database cluster is already deployed or not. It's recommended to set it to false once the cluster is successfully created.
 
 `operation: "create"`
+
 - This is compulsory for creating new database cluster.
 
 `api_id: 1`
@@ -309,7 +317,7 @@ Supported create new database cluster:
 
 - Location of MySQL data directory.
 
-```
+```yml
 mysql_hostnames:
  - '192.168.1.101'
  - '192.168.1.102'
@@ -392,7 +400,7 @@ Supported add existing database cluster:
 
 - Location of MySQL data directory.
 
-```
+```yml
 mysql_hostnames:
  - '192.168.1.101'
  - '192.168.1.102'
