@@ -3,17 +3,6 @@
 # ClusterControl
 # ==============
 
-local_ssh_key_path: /Users/ashraf/.ssh/id_rsa
-local_ssh_pubkey_path: "{{ local_ssh_key_path }}.pub"
-mysql_root_username: root
-mysql_root_password: password
-cmon_mysql_password: cmon
-cmon_mysql_port: 3306
-cmon_ssh_user: root
-cmon_ssh_key_path: /root/.ssh/id_rsa
-cmon_ssh_key_dir: /root/.ssh
-rpc_url: http://localhost:9500
-gpg_key: http://repo.severalnines.com/severalnines-repos.asc
 clustercontrol_ui_packages:
   - clustercontrol-cmonapi
   - clustercontrol
@@ -25,6 +14,15 @@ cmon_sql_path: /usr/share/cmon
 cmonapi_bootstrap: "{{ apache_doc_root }}/cmonapi/config/bootstrap.php"
 cmonapi_database: "{{ apache_doc_root }}/cmonapi/config/database.php"
 ccui_bootstrap: "{{ apache_doc_root }}/clustercontrol/bootstrap.php"
+mysql_root_username: root
+mysql_root_password: password
+cmon_mysql_password: cmon
+cmon_mysql_port: 3306
+cmon_ssh_user: root
+cmon_ssh_key_path: /root/.ssh/id_rsa
+cmon_ssh_key_dir: /root/.ssh
+rpc_url: http://localhost:9500
+gpg_key: http://repo.severalnines.com/severalnines-repos.asc
 
 ## Default User ##
 
@@ -68,23 +66,28 @@ ccui_bootstrap: "{{ apache_doc_root }}/clustercontrol/bootstrap.php"
 # 	- operation: add
 # 	  type: galera
 # 		vendor: percona
-# 	  mysql_server_addresses: [ '192.168.1.171', '192.168.1.172', '192.168.1.173' ]
+# 	  mysql_server_addresses: 
+#       - '192.168.1.171'
+#       - '192.168.1.172'
+#       - '192.168.1.173'
 # 		monitored_mysql_port: 3306
 # 		mysql_user: "root"
 # 	  monitored_mysql_root_password: "mypassword"
-# 		ssh_user: "{{ cmon_ssh_user }}"
-# 		ssh_keyfile: "{{ cmon_ssh_key_path }}"
+# 		ssh_user: "root"
+# 		ssh_keyfile: "/root/.ssh/id_rsa"
 # 		ssh_port: 22
 # 		sudo_password: ""
 # 	- operation: create
 # 	  type: mysql_single
 # 		vendor: oracle
-# 		mysql_server_addresses: [ '192.168.55.16' ]
+# 		mysql_server_addresses: 
+#       - '192.168.55.16'
+#       - '192.168.55.17'
 # 		monitored_mysql_port: 3306
 # 		mysql_user: "root"
 # 		monitored_mysql_root_password: "mypassword"
-# 		ssh_user: "{{ cmon_ssh_user }}"
-# 		ssh_keyfile: "{{ cmon_ssh_key_path }}"
+# 		ssh_user: "root"
+# 		ssh_keyfile: "/root/.ssh/id_rsa"
 # 		ssh_port: 22
 # 		sudo_password: ""
 
@@ -119,10 +122,9 @@ mysql_read_buffer_size: "1M"
 mysql_read_rnd_buffer_size: "4M"
 mysql_thread_cache_size: "16"
 mysql_max_connections: 151
-
-# Other settings.
 mysql_wait_timeout: 28800
 mysql_thread_concurrency: 2
+mysql_mysqldump_max_allowed_packet: "64M"
 
 # InnoDB settings.
 mysql_innodb_file_per_table: "1"
@@ -132,10 +134,7 @@ mysql_innodb_log_buffer_size: "8M"
 mysql_innodb_flush_log_at_trx_commit: "1"
 mysql_innodb_lock_wait_timeout: 50
 
-# mysqldump settings.
-mysql_mysqldump_max_allowed_packet: "64M"
-
-# Users.
+# MySQL Users.
 mysql_users:
   - name: cmon
     host: "{{ ansible_default_ipv4.address }}"
