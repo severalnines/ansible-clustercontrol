@@ -12,7 +12,7 @@
 
 - name: Check if root password has been configured.
   stat: path="{{ mysql_user_home }}/.my.cnf"
-  register: root_password_configured 
+  register: root_password_configured
 
 - name: Update MySQL root password for localhost root account.
   shell: >
@@ -55,12 +55,17 @@
   register: dcps_db
   ignore_errors: yes
 
-- name: Import ClusterControl Controller database schema.
-  shell: mysql < "{{ cmon_sql_path }}/cmon_db.sql" && mysql < "{{ cmon_sql_path }}/cmon_data.sql"
+- name: Import ClusterControl Controller database.
+  shell:
+    mysql < "{{ cmon_sql_path }}/cmon_db.sql" &&
+    mysql < "{{ cmon_sql_path }}/cmon_data.sql"
   register: cmon_db_import
   when: "'Unknown' in cmon_db.stderr"
 
 - name: Import ClusterControl UI database.
   shell: mysql < {{ apache_doc_root }}/clustercontrol/sql/dc-schema.sql
   register: ccui_db_import
-  when: "'Unknown' in dcps_db.stderr"
+  when:
+    ("'Unknown' in dcps_db.stderr") or
+    (rh_clustercontrol_ui_install_packages.changed) or
+    (deb_clustercontrol_ui_install_packages.changed)

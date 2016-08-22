@@ -1,0 +1,248 @@
+---
+
+- name: Check if CMON is running.
+  shell: ps aux | grep cmon | grep -v grep
+  ignore_errors: yes
+  changed_when: false
+  register: service_cmon_status
+
+- name: Report status of CMON.
+  fail:
+    msg: |
+      CMON is not running.
+      Return code from `grep`:
+      {{ service_cmon_status.rc }}
+  when: service_cmon_status.rc != 0
+
+- name: Retrieve ClusterControl RPC token.
+  shell: "grep rpc_key {{ cmon_config_file }} | cut -d'=' -f2"
+  register: rpc_token_retrieved
+  when: service_cmon_status.rc == 0
+
+- name: Define existing API token.
+  set_fact:
+    rpc_token: "{{ rpc_token_retrieved.stdout }}"
+  when: service_cmon_status.rc == 0
+
+- name: Fetch public key from ClusterControl server.
+  fetch:
+    dest: "tmp/clustercontrol/cc_key.pub"
+    src: "{{ ssh_key_dir }}/id_rsa.pub"
+    flat: yes
+  register: cc_pubkeys
+  changed_when: false
+
+- name: Collect ssh-keyscan on managed DB nodes.
+  shell: ssh-keyscan -H {{ key.1 }} >> "/tmp/{{ key.1 }}.pub"
+  with_subelements:
+    - "{{ cc_cluster }}"
+    - mysql_hostnames
+  ignore_errors: true
+  loop_control:
+    loop_var: key
+
+- name: Fetch known_hosts files from ClusterControl server.
+  fetch:
+    dest: "tmp/clustercontrol/{{ key.1 }}.pub"
+    src: "/tmp/{{ key.1 }}.pub"
+    flat: yes
+  changed_when: false
+  with_subelements:
+    - "{{ cc_cluster }}"
+    - mysql_hostnames
+  ignore_errors: true
+  loop_control:
+    loop_var: key
+
+- name: Setting up known_hosts on ClusterControl server.
+  known_hosts:
+    name: "{{ host.1 }}"
+    key: "{{ lookup('file', 'tmp/clustercontrol/' + host.1 + '.pub') }}"
+  with_subelements:
+    - "{{ cc_cluster }}"
+    - mysql_hostnames
+  when: cc_cluster.mysql_hostnames is defined
+  loop_control:
+    loop_var: host
+
+- name: Remove temp local known_hosts copies.
+  local_action: file dest="tmp/clustercontrol/{{ host.1 }}.pub" state=absent
+  changed_when: false
+  with_subelements:
+    - "{{ cc_cluster }}"
+    - mysql_hostnames
+  loop_control:
+    loop_var: host
+
+- name: Post create new MySQL Replication cluster operation to ClusterControl.
+  uri:
+    url: "{{ rpc_url }}/0/job"
+    method: POST
+    body:
+      token: "{{ rpc_token }}"
+      operation: "createJob"
+      job:
+        command: "create_cluster"
+        job_data:
+          api_id: "{{ create.api_id | default(1) }}"
+          cluster_type: "replication"
+          create_local_repository: "{{ create.create_local_repository | default(false) }}"
+          data_center: "{{ create.data_center | default(0) }}"
+          disable_firewall: "{{ create.disable_firewall | default(true) }}"
+          disable_selinux: "{{ create.disable_selinux | default(true) }}"
+          generate_token: "{{ create.generate_token | default(true) }}"
+          install_software: "{{ create.install_software | default(true) }}"
+          master_address: "{{ create.mysql_hostnames[0] }}"
+          mysql_cnf_template: "{{ create.mysql_cnf_template | default('my.cnf.repl57') }}"
+          mysql_datadir: "{{ create.mysql_datadir | default('/var/lib/mysql') }}"
+          mysql_hostnames: "{{ create.mysql_hostnames }}"
+          mysql_password: "{{ create.mysql_password | default('password') }}"
+          mysql_port: "{{ create.mysql_port | default('3306') }}"
+          mysql_version: "{{ create.mysql_version | default('5.7') }}"
+          software_package: "{{ create.software_package | default('') }}"
+          ssh_keyfile: "{{ create.ssh_keyfile | default('/root/.ssh/id_rsa') }}"
+          ssh_port: "{{ create.ssh_port | default(22) }}"
+          ssh_user: "{{ create.ssh_user | default('root') }}"
+          sudo_password: "{{ create.sudo_password }}"
+          type: "{{ create.type | default('mysql') }}"
+          use_internal_repos: "{{ create.use_internal_repos | default(false) }}"
+          user_id: "{{ create.user_id | default(1) }}"
+          vendor: "{{ create.vendor }}"
+    body_format: json
+  with_items: "{{ cc_cluster }}"
+  when:
+    create.operation == "create" and
+    create.cluster_type == "replication" and
+    create.type == "mysql" and
+    create.deployment
+  loop_control:
+    loop_var: create
+
+- name: Post create new Galera Cluster operation to ClusterControl.
+  uri:
+    url: "{{ rpc_url }}/0/job"
+    method: POST
+    body:
+      token: "{{ rpc_token }}"
+      operation: "createJob"
+      job:
+        command: "create_cluster"
+        job_data:
+          api_id: "{{ createg.api_id | default(1) }}"
+          cluster_type: "galera"
+          create_local_repository: "{{ createg.create_local_repository | default(false) }}"
+          data_center: "{{ createg.data_center | default(0) }}"
+          disable_firewall: "{{ createg.disable_firewall | default(true) }}"
+          disable_selinux:  "{{ createg.disable_selinux | default(true) }}"
+          enable_mysql_uninstall: "{{ createg.enable_mysql_uninstall | default(true) }}"
+          generate_token: "{{ createg.generate_token | default(true) }}"
+          mysql_cnf_template: "{{ createg.mysql_cnf_template | default('my.cnf.galera') }}"
+          mysql_datadir: "{{ createg.mysql_datadir | default('/var/lib/mysql') }}"
+          mysql_hostname: "{{ createg.mysql_hostnames }}"
+          mysql_hostnames: "{{ createg.mysql_hostnames }}"
+          mysql_password: "{{ createg.mysql_password | default('password') }}"
+          mysql_port: "{{ createg.mysql_port | default(3306) }}"
+          mysql_version: "{{ createg.mysql_version | default('5.6') }}"
+          software_package: "{{ createg.software_package | default('') }}"
+          ssh_keyfile: "{{ createg.ssh_keyfile | default('/root/.ssh/id_rsa') }}"
+          ssh_port: "{{ createg.ssh_port | default(22) }}"
+          ssh_user: "{{ createg.ssh_user | default('root') }}"
+          sudo_password: "{{ createg.sudo_password }}"
+          type: "{{ createg.type | default('mysql') }}"
+          use_internal_repos: "{{ createg.use_internal_repos | default(false) }}"
+          user_id: "{{ createg.user_id | default(1) }}"
+          vendor: "{{ createg.vendor }}"
+    body_format: json
+    return_content: yes
+  with_items: "{{ cc_cluster }}"
+  when:
+    createg.operation == "create" and
+    createg.cluster_type == "galera" and
+    createg.deployment
+  loop_control:
+    loop_var: createg
+
+- name: Post create new MySQL NDB Cluster operation to ClusterControl.
+  uri:
+    url: "{{ rpc_url }}/0/job"
+    method: POST
+    body:
+      token: "{{ rpc_token }}"
+      operation: "createJob"
+      job:
+        command: "create_cluster"
+        job_data:
+          api_id: "{{ createn.api_id | default(1) }}"
+          cluster_type: "mysqlcluster"
+          create_local_repository: "{{ createn.create_local_repository | default(false) }}"
+          disable_firewall: "{{ createn.disable_firewall | default(true) }}"
+          disable_selinux:  "{{ createn.disable_selinux | default(true) }}"
+          enable_mysql_uninstall: "{{ createn.enable_mysql_uninstall | default(true) }}"
+          generate_token: "{{ createn.generate_token | default(true) }}"
+          mgmd_datadir: "{{ createn.mgmd_datadir | default ('/var/lib/mysql-cluster') }}"
+          mgmd_hostnames: "{{ createn.mgmd_hostnames }}"
+          mgmd_port: "{{ createn.mgmd_port | default(1186) }}"
+          mysql_cnf_template: "{{ createn.mysql_cnf_template | default('my.cnf.mysqlcluster') }}"
+          mysql_datadir: "{{ createn.mysql_datadir | default('/var/lib/mysql') }}"
+          mysql_hostnames: "{{ createn.mysql_hostnames }}"
+          mysql_password: "{{ createn.mysql_password | default('password') }}"
+          mysql_port: "{{ createn.mysql_port | default(3306) }}"
+          ndbd_datadir: "{{ createn.ndbd_datadir | default('/var/lib/mysql-cluster') }}"
+          ndbd_hostnames: "{{ createn.ndbd_hostnames }}"
+          ndbd_port: "{{ createn.ndbd_port | default(2200) }}"
+          ssh_keyfile: "{{ createn.ssh_keyfile | default('/root/.ssh/id_rsa') }}"
+          ssh_port: "{{ createn.ssh_port | default(22) }}"
+          ssh_user: "{{ createn.ssh_user | default('root') }}"
+          sudo_password: "{{ createn.sudo_password }}"
+          type: "{{ createn.type | default('mysql') }}"
+          use_internal_repos: "{{ createn.use_internal_repos | default(false) }}"
+          user_id: "{{ createn.user_id | default(1) }}"
+    body_format: json
+    return_content: yes
+  with_items: "{{ cc_cluster }}"
+  when:
+    createn.operation == "create" and
+    createn.cluster_type == "mysqlcluster" and
+    createn.deployment
+  loop_control:
+    loop_var: createn
+
+
+- name: Post add existing Galera Cluster operation to ClusterControl.
+  uri:
+    url: "{{ rpc_url }}/0/job"
+    method: POST
+    body:
+      token: "{{ rpc_token }}"
+      operation: "createJob"
+      job:
+        command: "add_cluster"
+        job_data:
+          api_id: "{{ add.api_id | default(1) }}"
+          cluster_type: "galera"
+          enable_cluster_autorecovery: "{{ add.enable_cluster_autorecovery | default(false) }}"
+          enable_node_autorecovery: "{{ add.enable_node_autorecovery | default(false) }}"
+          enable_information_schema_queries: "{{ add.enable_information_schema_queries | default(false) }}"
+          galera_version: "{{ add.galera_version | default('3.x') }}"
+          generate_token: "{{ add.generate_token | default(true) }}"
+          monitored_mysql_port: "{{ add.monitored_mysql_port | default(3306) }}"
+          mysql_basedir: "{{ add.mysql_basedir | default('/usr') }}"
+          mysql_password: "{{ add.mysql_password }}"
+          mysql_servers: "['{{ add.mysql_hostnames[0] }}']"
+          mysql_user: "{{ add.mysql_user | default('root') }}"
+          ssh_keyfile: "{{ add.ssh_keyfile | default('/root/.ssh/id_rsa') }}"
+          ssh_port: "{{ add.ssh_port | default(22) }}"
+          ssh_user: "{{ add.ssh_user | default('root') }}"
+          sudo_password: "{{ add.sudo_password }}"
+          tag: "{{ add.tag | default('') }}"
+          user_id: "{{ add.user_id | default(1) }}"
+          vendor: "{{ add.vendor }}"
+    body_format: json
+    return_content: yes
+  with_items: "{{ cc_cluster }}"
+  when:
+    add.operation == "add" and
+    add.cluster_type == "galera" and
+    add.deployment
+  loop_control:
+    loop_var: add

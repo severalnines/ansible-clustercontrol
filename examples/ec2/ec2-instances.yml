@@ -1,0 +1,50 @@
+- name: Create instances
+  hosts: localhost
+  gather_facts: False
+
+  tasks:
+    - name: Provision ClusterControl node
+      ec2:
+        count: 1
+        region: us-east-1
+        zone: us-east-1a
+        key_name: mykeypair
+        group: default
+        instance_type: t2.medium
+        image: ami-3f03c55c
+        wait: yes
+        wait_timeout: 500
+        volumes:
+          - device_name: /dev/sda1
+            device_type: standard
+            volume_size: 20
+            delete_on_termination: true
+        monitoring: no
+        vpc_subnet_id: subnet-9ecc2dfb
+        assign_public_ip: yes
+        instance_tags:
+          Name: clustercontrol
+          set: clustercontrol
+
+    - name: Provision Galera nodes
+      ec2:
+        count: 3
+        region: us-east-1
+        zone: us-east-1a
+        key_name: mykeypair
+        group: default
+        instance_type: t2.medium
+        image: ami-3f03c55c
+        wait: yes
+        wait_timeout: 500
+        volumes:
+          - device_name: /dev/sdf
+            device_type: standard
+            volume_size: 20
+            delete_on_termination: true
+        monitoring: no
+        vpc_subnet_id: subnet-9ecc2dfb
+        assign_public_ip: yes
+        instance_tags:
+          Name: galeracluster
+          set: galeracluster

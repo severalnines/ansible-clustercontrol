@@ -1,30 +1,106 @@
 ---
+# ==============
+# ClusterControl
+# ==============
+
+local_ssh_key_path: /Users/ashraf/.ssh/id_rsa
+local_ssh_pubkey_path: "{{ local_ssh_key_path }}.pub"
 mysql_root_username: root
 mysql_root_password: password
 cmon_mysql_password: cmon
 cmon_mysql_port: 3306
 cmon_ssh_user: root
 cmon_ssh_key_path: /root/.ssh/id_rsa
-
-# ClusterControl settings
+cmon_ssh_key_dir: /root/.ssh
+rpc_url: http://localhost:9500
 gpg_key: http://repo.severalnines.com/severalnines-repos.asc
-clustercontrol_packages:
-  - clustercontrol-controller
+clustercontrol_ui_packages:
   - clustercontrol-cmonapi
   - clustercontrol
   - clustercontrol-nodejs
+clustercontrol_controller_packages:
+  - clustercontrol-controller
 cmon_config_file: /etc/cmon.cnf
 cmon_sql_path: /usr/share/cmon
 cmonapi_bootstrap: "{{ apache_doc_root }}/cmonapi/config/bootstrap.php"
 cmonapi_database: "{{ apache_doc_root }}/cmonapi/config/database.php"
 ccui_bootstrap: "{{ apache_doc_root }}/clustercontrol/bootstrap.php"
 
+## Default User ##
+
+# Define admin email address. Default password is 'admin'
+# cc_admin:
+#   - email: "demo@severalnines.com"
+#     password: "test123"
+
+## License ##
+
+# If you have a valid license, set cc_configure_license to true
+# and define them here:
+# cc_license:
+#   - email: "demo@severalnines.com"
+#     company: "Severalnines AB"
+#     expired_date: "31/12/2017"
+#     key: "XXXXXXXXXXXXXXXXXXXXXXXX"
+
+## LDAP ##
+
+# If you would like to integrate LDAP authentication with ClusterControl,
+# ensure cc_configure_ldap is set to true and define the settings here:
+# cc_ldap:
+#   - enabled: 1
+#     host: "192.168.1.100"
+#     port: 389
+#     base_dn: "dc=mydomain,dc=com"
+#     admin_dn: "cn=admin,dc=mydomain,dc=com"
+#     admin_password: "password"
+#     user_dn: "ou=People,dc=mydomain,dc=com"
+#     group_dn: "ou=Group,dc=mydomain,dc=com"
+
+## Database Cluster ##
+
+# If you would like to add or create database host or cluster, set
+# cc_deploy_cluster to true and define the values here. If the cluster(s)
+# is already exist, ClusterControl will skip this part. Otherwise, ClusterControl
+# will deploy/import the cluster including setting up the passwordless SSH:
+
+# cc_cluster:
+# 	- operation: add
+# 	  type: galera
+# 		vendor: percona
+# 	  mysql_server_addresses: [ '192.168.1.171', '192.168.1.172', '192.168.1.173' ]
+# 		monitored_mysql_port: 3306
+# 		mysql_user: "root"
+# 	  monitored_mysql_root_password: "mypassword"
+# 		ssh_user: "{{ cmon_ssh_user }}"
+# 		ssh_keyfile: "{{ cmon_ssh_key_path }}"
+# 		ssh_port: 22
+# 		sudo_password: ""
+# 	- operation: create
+# 	  type: mysql_single
+# 		vendor: oracle
+# 		mysql_server_addresses: [ '192.168.55.16' ]
+# 		monitored_mysql_port: 3306
+# 		mysql_user: "root"
+# 		monitored_mysql_root_password: "mypassword"
+# 		ssh_user: "{{ cmon_ssh_user }}"
+# 		ssh_keyfile: "{{ cmon_ssh_key_path }}"
+# 		ssh_port: 22
+# 		sudo_password: ""
+
+# =================
+# Managed DB nodes
+# =================
+ssh_key_dir: /root/.ssh
+ssh_user: root
+
+# ===============================
+# MySQL/MariaDB on ClusterControl
+# ===============================
+
 # Set this to `yes` to forcibly update the root password.
 mysql_root_password_update: no
-
 mysql_enabled_on_startup: yes
-
-# update my.cnf. each time role is run? yes | no
 overwrite_global_mycnf: yes
 
 # MySQL connection settings.
@@ -35,29 +111,22 @@ mysql_pid_file: "{{ mysql_datadir }}/mysql.pid"
 mysql_user_home: /root
 
 # Memory settings (default values optimized ~512MB RAM).
-mysql_key_buffer_size: "256M"
-mysql_max_allowed_packet: "64M"
+mysql_key_buffer_size: "32M"
+mysql_max_allowed_packet: "16M"
 mysql_table_open_cache: "256"
 mysql_sort_buffer_size: "1M"
 mysql_read_buffer_size: "1M"
 mysql_read_rnd_buffer_size: "4M"
-mysql_myisam_sort_buffer_size: "64M"
-mysql_thread_cache_size: "8"
-mysql_query_cache_size: "16M"
+mysql_thread_cache_size: "16"
 mysql_max_connections: 151
 
 # Other settings.
 mysql_wait_timeout: 28800
-
-# Try number of CPU's * 2 for thread_concurrency.
 mysql_thread_concurrency: 2
 
 # InnoDB settings.
-# Set .._buffer_pool_size up to 80% of RAM but beware of setting too high.
 mysql_innodb_file_per_table: "1"
-mysql_innodb_buffer_pool_size: "256M"
 mysql_innodb_additional_mem_pool_size: "20M"
-# Set .._log_file_size to 25% of buffer pool size.
 mysql_innodb_log_file_size: "64M"
 mysql_innodb_log_buffer_size: "8M"
 mysql_innodb_flush_log_at_trx_commit: "1"

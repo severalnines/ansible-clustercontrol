@@ -1,4 +1,7 @@
 ---
+- name: Disable SElinux.
+  selinux: state=disabled
+
 - name: Ensure MySQL packages are installed.
   yum: name={{ item }} state=installed
   with_items: "{{ mysql_packages }}"
@@ -22,14 +25,19 @@
   register: s9s_repo_installed
 
 - name: Install Severalnines GPG key (yum).
-  command: rpm --import {{ gpg_key }}
+  rpm_key: state=present key={{ gpg_key }}
   when: s9s_repo_installed.stat.exists == false
 
 - name: Download Severalnines Repository definition.
-  command: wget {{ repo_config_url }} -P {{ repo_config_dir }}
+  get_url: url={{ repo_config_url }} dest={{ repo_config_path }}
   when: s9s_repo_installed.stat.exists == false
 
-- name: Ensure ClusterControl packages are installed.
-  yum: name={{ item }} state=installed update_cache=yes
-  with_items: "{{ clustercontrol_packages }}"
-  register: rh_clustercontrol_install_packages
+- name: Install latest version of ClusterControl Controller packages.
+  yum: name={{ item }} state=latest update_cache=yes
+  with_items: "{{ clustercontrol_controller_packages }}"
+  register: rh_clustercontrol_controller_install_packages
+
+- name: Install latest version of ClusterControl UI packages.
+  yum: name={{ item }} state=latest update_cache=yes
+  with_items: "{{ clustercontrol_ui_packages }}"
+  register: rh_clustercontrol_ui_install_packages

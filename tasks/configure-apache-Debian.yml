@@ -43,6 +43,7 @@
     - "{{ apache_ssl_config }}"
   notify: restart apache
   when: apache_install_packages
+  tags: mydebug
 
 - name: Check if SSL key file is exist.
   stat: path={{ key_file }}
