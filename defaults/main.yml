@@ -26,25 +26,24 @@ gpg_key: http://repo.severalnines.com/severalnines-repos.asc
 
 ## Default User ##
 
-# Define admin email address. Default password is 'admin'
+# Define admin email address.
 # cc_admin:
 #   - email: "demo@severalnines.com"
 #     password: "test123"
 
 ## License ##
 
-# If you have a valid license, set cc_configure_license to true
-# and define them here:
+# If you have a valid license, define them here:
 # cc_license:
 #   - email: "demo@severalnines.com"
 #     company: "Severalnines AB"
 #     expired_date: "31/12/2017"
 #     key: "XXXXXXXXXXXXXXXXXXXXXXXX"
 
-## LDAP ##
+## LDAP (experimental)##
 
 # If you would like to integrate LDAP authentication with ClusterControl,
-# ensure cc_configure_ldap is set to true and define the settings here:
+# define the settings here:
 # cc_ldap:
 #   - enabled: 1
 #     host: "192.168.1.100"
@@ -58,34 +57,43 @@ gpg_key: http://repo.severalnines.com/severalnines-repos.asc
 ## Database Cluster ##
 
 # If you would like to add or create database host or cluster, set
-# cc_deploy_cluster to true and define the values here. If the cluster(s)
-# is already exist, ClusterControl will skip this part. Otherwise, ClusterControl
-# will deploy/import the cluster including setting up the passwordless SSH:
+# 'deployment: true' and define the variables here. If true, the role
+# will always send the deployment job to CMON regardless the database
+# cluster is already deployed or not. It's recommended to set it to false
+# once the cluster is successfully created. ClusterControl will deploy/import
+# the cluster including setting up the passwordless SSH:
 
 # cc_cluster:
-# 	- operation: add
+# 	- deployment: true
+#     operation: add
 # 	  type: galera
 # 		vendor: percona
-# 	  mysql_server_addresses: 
+# 	  mysql_hostnames: 
 #       - '192.168.1.171'
 #       - '192.168.1.172'
 #       - '192.168.1.173'
-# 		monitored_mysql_port: 3306
+# 		mysql_port: 3306
 # 		mysql_user: "root"
-# 	  monitored_mysql_root_password: "mypassword"
+# 	  mysql_password: "mypassword"
 # 		ssh_user: "root"
 # 		ssh_keyfile: "/root/.ssh/id_rsa"
 # 		ssh_port: 22
 # 		sudo_password: ""
-# 	- operation: create
-# 	  type: mysql_single
+#     enable_node_autorecovery: true
+#     enable_cluster_autorecovery: true
+# 	- deployment: true
+#     operation: create
+# 	  type: replication
+# 	  mysql_version: "5.7"
+#     mysql_cnf_template: "my.cnf.repl57"
+#     mysql_datadir: "/var/lib/mysql"
 # 		vendor: oracle
-# 		mysql_server_addresses: 
+# 		mysql_hostnames: 
 #       - '192.168.55.16'
 #       - '192.168.55.17'
-# 		monitored_mysql_port: 3306
+# 		mysql_port: 3306
 # 		mysql_user: "root"
-# 		monitored_mysql_root_password: "mypassword"
+# 		mysql_password: "mypassword"
 # 		ssh_user: "root"
 # 		ssh_keyfile: "/root/.ssh/id_rsa"
 # 		ssh_port: 22
