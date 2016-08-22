@@ -143,7 +143,7 @@ The following playbook will install ClusterControl on 192.168.55.100, setup pass
           - '192.168.55.205'
         mysql_cnf_template: "my.cnf.repl57"
         mysql_datadir: "/var/lib/mysql"
-        mysql_password: "kemahiranhidup"
+        mysql_password: "password"
         mysql_port: 3306
         mysql_version: "5.7"
         ssh_keyfile: "/root/.ssh/id_rsa"
@@ -260,30 +260,39 @@ Supported create new database cluster:
 - This is compulsory for creating new database cluster.
 
 `api_id: 1`
+
 - API ID for ClusterControl RPC interface. Keep it default is recommended.
 
 `cluster_type: "galera"`
+
 - Cluster type. Supported values are: galera, replication.
 
 `create_local_repository: false`
+
 - Create and mirror the current database vendor’s repository and then deploy using the local mirrored repository. This is a preferred option when you have to scale the Galera Cluster in the future, to ensure the newly provisioned node will always have the same version as the rest of the members.
 
 `data_center: 0`
+
 - Exclusive for Galera cluster. Specify the gmcast.segment number to distinguish the geographical location.
 
 `disable_firewall: true`
+
 - Whether to enable or disable firewall. Set to `false` if you have opened required ports for specific cluster.
 
 `disable_selinux: true`
+
 - Whether to enable or disable selinux. Set to `false` if you have added SElinux rules accordingly.
 
 `enable_mysql_uninstall: true`
+
 - Set to `false` if you already have MySQL installed and you don't want ClusterControl to uninstall it during the deployment.
 
 `generate_token: true`
+
 - ClusterControl will generate a new RPC token for the cluster. Keep it default is recommended.
 
 `vendor: "percona"`
+
 - For Galera cluster:
   - Codership and Percona - 5.5 and 5.6.
   - MariaDB - 5.5 and 10.1.
@@ -293,9 +302,11 @@ Supported create new database cluster:
   - MariaDB - 10.1
 
 `mysql_cnf_template: "my.cnf.galera"`
-- MySQL configuration template file under `/usr/share/cmon/templates`. Keep it default is recommended.
+
+- MySQL configuration template file under `/usr/share/cmon/templates`. For Galera Cluster, use 'my.cnf.galera'. For MySQL 5.7, use 'my.cnf.repl57'. For MySQL replication 5.6/MariaDB, use 'mysql.cnf.repl'.
 
 `mysql_datadir: "/var/lib/mysql"`
+
 - Location of MySQL data directory.
 
 ```
@@ -304,15 +315,19 @@ mysql_hostnames:
  - '192.168.1.102'
  - '192.168.1.103'
  ```
-- List of the MySQL hostnames or IP address for this database cluster.
+
+- List of the MySQL hostnames or IP address for this database cluster. For MySQL Replication, the first node is the master.
 
 `mysql_password: "password"`
+
 - Specify MySQL root password. ClusterControl will configure the same MySQL root password for all instances in the cluster.
 
 `mysql_port: 3306`
+
 - MySQL port for all nodes. Default is 3306.
 
 `mysql_version: "5.6"`
+
 - For Galera cluster:
   - Codership and Percona - 5.5 and 5.6.
   - MariaDB - 5.5 and 10.1.
@@ -322,22 +337,28 @@ mysql_hostnames:
   - MariaDB - 10.1
 
 `software_package: true`
+
 - Existing MySQL dependencies will be removed. New packages will be installed and existing packages will be uninstalled when provisioning the node with required software.
 
 `ssh_user: "root"`
+
 - SSH user. Default is root.
 
 `ssh_keyfile: "/root/.ssh/id_rsa"`
+
 - The full path of SSH key (the key must exist in ClusterControl node) that will be used by SSH User to perform passwordless SSH.
 
 `ssh_port: 22`
+
 - SSH port for the target DB nodes.
 
 `sudo_password: ""`
+
 - If you use sudo with password, specify it here. Ignore this if SSH User is root or sudoer does not need a sudo password.
 
 `type: "mysql"`
-- Database type. Supported value is `mysql`. In the feature, we are going to support `mongodb` and `postgresql`.
+
+- Database type. Supported value is `mysql`. In the future, we are going to support `mongodb` and `postgresql`.
 
 ### Add existing database cluster
 
@@ -345,24 +366,30 @@ Supported add existing database cluster:
   - Galera cluster
 
 `deployment: true`
+
 - If true, the role will always send the deployment job to CMON regardless the database cluster is already deployed or not. It's recommended to set it to false once the cluster is successfully created.
 
 `operation: "add"`
+
 - This is compulsory for add existing cluster.
 
 `api_id: 1`
+
 - API ID for ClusterControl RPC interface. Keep it default is recommended.
 
 `cluster_type: "galera"`
+
 - Cluster type. Supported value is `galera`.
 
 `vendor: "percona"`
+
 - For Galera cluster:
   - percona - Percona XtraDB Cluster (5.5/5.6)
   - codershop - MySQL Galera Cluster (5.5/5.6)
   - mariadb - MariaDB Galera Cluster (5.5/10.x)
 
 `mysql_datadir: "/var/lib/mysql"`
+
 - Location of MySQL data directory.
 
 ```
@@ -371,33 +398,43 @@ mysql_hostnames:
  - '192.168.1.102'
  - '192.168.1.103'
  ```
+
 - List of the MySQL hostnames or IP address for this database cluster.
 
 `mysql_password: "password"`
+
 - Specify MySQL root password. ClusterControl assumes the same MySQL root password for all instances in the cluster.
 
 `mysql_port: 3306`
+
 - MySQL port for all nodes. Default is 3306.
 
 `galera_version: "3.x"`
+
 - The Galera replication library version. Supported values are 3.x and 2.x.
 
 `ssh_user: "root"`
+
 - SSH user. Default is root.
 
 `ssh_keyfile: "/root/.ssh/id_rsa"`
+
 - The full path of SSH key (the key must exist in ClusterControl node) that will be used by SSH User to perform passwordless SSH.
 
 `ssh_port: 22`
+
 - SSH port for the target DB nodes.
 
 `sudo_password: ""`
+
 - If you use sudo with password, specify it here. Ignore this if SSH User is root or sudoer does not need a sudo password.
 
 `enable_node_autorecovery: true`
+
 - ClusterControl will perform automatic recovery if it detects any of the nodes in the cluster is down.
 
 `enable_cluster_autorecovery: true`
+
 - ClusterControl will perform automatic recovery if it detects the cluster is down or degraded.
 
 ## Limitations
