@@ -6,8 +6,8 @@
     - name: Provision ClusterControl node
       ec2:
         count: 1
-        region: us-east-1
-        zone: us-east-1a
+        region: us-west-1
+        zone: us-west-1a
         key_name: mykeypair
         group: default
         instance_type: t2.medium
@@ -24,13 +24,14 @@
         assign_public_ip: yes
         instance_tags:
           Name: clustercontrol
-          set: clustercontrol
+          set: ansible
+          group: clustercontrol
 
     - name: Provision Galera nodes
       ec2:
         count: 3
-        region: us-east-1
-        zone: us-east-1a
+        region: us-west-1
+        zone: us-west-1a
         key_name: mykeypair
         group: default
         instance_type: t2.medium
@@ -38,7 +39,7 @@
         wait: yes
         wait_timeout: 500
         volumes:
-          - device_name: /dev/sdf
+          - device_name: /dev/sda1
             device_type: standard
             volume_size: 20
             delete_on_termination: true
@@ -47,4 +48,5 @@
         assign_public_ip: yes
         instance_tags:
           Name: galeracluster
-          set: galeracluster
+          set: ansible
+          group: galeracluster

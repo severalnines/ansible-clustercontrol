@@ -63,7 +63,7 @@ You should be good to go.
 
 # Deployment Steps
 
-Configure ``ec2-instance.yml`` and ``deploy-everything.yml`` accordingly to suit your needs. Then, run the playbook as the following order:
+Configure ``ec2-instance.yml`` and ``deploy-everything.yml`` accordingly to suit your needs. Then, run the playbook in the following order:
 
 
 0) Ensure the ClusterControl role is there:
@@ -84,7 +84,12 @@ ansible-playbook -i /etc/ansible/ec2.py ec2-instances.yml
 /etc/ansible/ec2.py --refresh-cache
 ```
 
-3) Install ClusterControl and deploy the database cluster:
+3) Verify if all EC2 instances are reachable by Ansible:
+```bash
+ansible -m ping tag_set_ansible
+```
+
+4) Install ClusterControl and deploy the database cluster:
 ```bash
 ansible-playbook -i /etc/ansible/ec2.py deploy-everything.yml
 ```

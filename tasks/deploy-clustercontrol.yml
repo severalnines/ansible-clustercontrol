@@ -17,43 +17,52 @@
   set_fact:
     mysql_packages: "{{ __mysql_packages | list }}"
   when: mysql_packages is not defined
+  tags: controller
 
 - name: Define mysql_daemon.
   set_fact:
     mysql_daemon: "{{ __mysql_daemon }}"
   when: mysql_daemon is not defined
+  tags: controller
 
 - name: Define apache_packages.
   set_fact:
     apache_packages: "{{ __apache_packages | list }}"
   when: apache_packages is not defined
+  tags: controller
 
 - name: Define apache_daemon.
   set_fact:
     apache_daemon: "{{ __apache_daemon }}"
   when: apache_daemon is not defined
+  tags: controller
 
 - name: Define apache_user.
   set_fact:
     apache_user: "{{ __apache_user }}"
   when: apache_user is not defined
+  tags: controller
 
 - name: Define cmon_ssh_key_path.
   set_fact:
     cmon_ssh_key_path: "/home/{{ cmon_ssh_user }}/.ssh/id_rsa"
   when: cmon_ssh_user != 'root'
+  tags: controller
 
 - name: Define cmon_ssh_key_dir.
   set_fact:
     cmon_ssh_key_dir: "/home/{{ cmon_ssh_user }}/.ssh"
   when: cmon_ssh_user != 'root'
+  tags: controller
 
 # Installation tasks.
 - include: setup-RedHat.yml
   when: ansible_os_family == 'RedHat'
+  tags: controller
 
 - include: setup-Debian.yml
   when: ansible_os_family == 'Debian'
+  tags: controller
 
 - name: Check if MySQL/MariaDB packages were installed.
   set_fact:
@@ -61,6 +70,7 @@
       "{{ (rh_mysql_install_packages is defined and rh_mysql_install_packages.changed) or
         (deb_mysql_install_packages is defined and deb_mysql_install_packages.changed)
       }}"
+  tags: controller
 
 - name: Check if Apache packages were installed.
   set_fact:
@@ -69,6 +79,7 @@
         (rh_apache_install_packages is defined and rh_apache_install_packages.changed) or
         (deb_apache_install_packages is defined and deb_apache_install_packages.changed)
       }}"
+  tags: controller
 
 - name: Check if ClusterControl UI packages were installed.
   set_fact:
@@ -77,6 +88,7 @@
         (rh_clustercontrol_ui_install_packages is defined and rh_clustercontrol_ui_install_packages.changed) or
         (deb_clustercontrol_ui_install_packages is defined and deb_clustercontrol_ui_install_packages.changed)
       }}"
+  tags: controller
 
 - name: Check if ClusterControl Controller package was installed.
   set_fact:
@@ -85,10 +97,13 @@
         (rh_clustercontrol_controller_install_packages is defined and rh_clustercontrol_controller_install_packages.changed) or
         (deb_clustercontrol_controller_install_packages is defined and deb_clustercontrol_controller_install_packages.changed)
       }}"
+  tags: controller
 
 # Configure MySQL, schemas and users
 - include: configure-mysql.yml
+
 - include: secure-installation.yml
+
 - include: users.yml
 
 # Configure Apache

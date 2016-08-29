@@ -2,15 +2,18 @@
 - name: Check if MySQL is already installed.
   shell: which mysqld_safe
   register: check_mysqld
+  tags: controller
 
 - name: Update apt cache if MySQL is not yet installed.
   apt: update_cache=yes
   when: check_mysqld.rc != 0
+  tags: controller
 
 - name: Ensure MySQL packages are installed.
   apt: name={{ item }} state=installed
   with_items: "{{ mysql_packages }}"
   register: deb_mysql_install_packages
+  tags: controller
 
 - name: Ensure MySQL Python libraries are installed.
   apt: "name=python-mysqldb state=installed"
@@ -18,6 +21,7 @@
 - name: Ensure MySQL is stopped after initial install.
   service: name={{ mysql_daemon }} state=stopped
   when: check_mysqld.rc != 0
+  tags: controller
 
 - name: Delete innodb log files created by apt package after initial install.
   file: state=absent path={{ item }}
@@ -26,19 +30,23 @@
     - "{{ mysql_datadir }}/ib_logfile0"
     - "{{ mysql_datadir }}/ib_logfile1"
   notify: start mysql
+  tags: controller
 
 - name: Check if Apache is already installed.
   stat: path=/usr/sbin/apachectl
   register: apache_installed
+  tags: controller
 
 - name: Update apt cache if Apache is not yet installed.
   apt: update_cache=yes
   when: apache_installed.stat.exists == false
+  tags: controller
 
 - name: Ensure Apache packages are installed.
   apt: name={{ item }} state=installed
   with_items: "{{ apache_packages }}"
   register: deb_apache_install_packages
+  tags: controller
 
 - name: Enable Apache module (ssl and rewrite).
   apache2_module: name={{ item }} state=present
@@ -46,32 +54,40 @@
     - ssl
     - rewrite
   notify: restart apache
+  tags: controller
 
 - name: Check if ClusterControl Controller is already installed.
   stat: path=/etc/sbin/cmon
   register: cmon_installed
+  tags: controller
 
 - name: Check if Severalnines Repository is configured.
   stat: path={{ repo_config_path }}
   register: s9s_repo_installed
+  tags: controller
 
 - name: Install Severalnines GPG key (apt)
   apt_key: state=present url={{ gpg_key }}
   when: s9s_repo_installed.stat.exists == false
+  tags: controller
 
 - name: Download Severalnines Repository definition.
   get_url: url={{ repo_config_url }} dest={{ repo_config_path }}
   when: s9s_repo_installed.stat.exists == false
+  tags: controller
 
 - name: Update apt cache if ClusterControl is not yet installed.
   apt: update_cache=yes
+  tags: controller
 
 - name: Install latest version of ClusterControl Controller packages.
   apt: name={{ item }} state=latest
   with_items: "{{ clustercontrol_controller_packages }}"
   register: deb_clustercontrol_controller_install_packages
+  tags: controller
 
 - name: Install latest version of ClusterControl UI packages.
   apt: name={{ item }} state=latest
   with_items: "{{ clustercontrol_ui_packages }}"
   register: deb_clustercontrol_ui_install_packages
+  tags: controller

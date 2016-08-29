@@ -2,18 +2,22 @@
 - name: Check if CMON configuration file is exist.
   stat: path={{ cmon_config_file }}
   register: cmon_cnf
+  tags: controller
 
 - name: Check if CMONAPI bootstrap file is exist.
   stat: path={{ cmonapi_bootstrap }}
   register: cmonapi_bs
+  tags: controller
 
 - name: Check if CMONAPI database file is exist.
   stat: path={{ cmonapi_database }}
   register: cmonapi_db
+  tags: controller
 
 - name: Check if ClusterControl bootstrap file is exist.
   stat: path={{ ccui_bootstrap }}
   register: ccui_bs
+  tags: controller
 
 - name: Generating ClusterControl API/RPC token.
   shell: "python -c 'import uuid; print uuid.uuid4()' | sha1sum | cut -f1 -d' '"
@@ -21,11 +25,13 @@
   when:
     clustercontrol_controller_install_packages and
     clustercontrol_ui_install_packages
+  tags: controller
 
 - name: Retrieve ClusterControl API/RPC token.
   shell: "grep rpc_key {{ cmon_config_file }} | cut -d'=' -f2"
   register: api_token_retrieved
   when: cmon_cnf.stat.exists == true
+  tags: controller
 
 - name: Define new API token.
   set_fact:
@@ -33,11 +39,13 @@
   when:
     clustercontrol_controller_install_packages and
     clustercontrol_ui_install_packages
+  tags: controller
 
 - name: Define existing API token.
   set_fact:
     api_rpc_token: "{{ api_token_retrieved.stdout }}"
   when: cmon_cnf.stat.exists == true
+  tags: controller
 
 - name: Install ClusterControl API token.
   shell: >
@@ -49,6 +57,7 @@
   when:
     clustercontrol_controller_install_packages and
     clustercontrol_ui_install_packages
+  tags: controller
 
 - name: Configure ClusterControl admin credentials.
   shell: >
@@ -63,6 +72,7 @@
     item.email    is defined and
     item.password is defined and
     api_rpc_token is defined
+  tags: controller
 
 - name: Configure ClusterControl license.
   shell: >
@@ -77,6 +87,7 @@
     item.company      is defined and
     item.expired_date is defined and
     item.key          is defined
+  tags: controller
 
 - name: Configure ClusterControl LDAP settings.
   shell: >
@@ -95,18 +106,22 @@
     item.base_dn        is defined and
     item.user_dn        is defined and
     item.group_dn       is defined
+  tags: controller
 
 - name: Copy CMONAPI bootstrap file.
   command: cp "{{ cmonapi_bootstrap }}.default" {{ cmonapi_bootstrap }}
   when: cmonapi_bs.stat.exists == false
+  tags: controller
 
 - name: Copy CMONAPI database file.
   command: cp "{{ cmonapi_database }}.default" {{ cmonapi_database }}
   when: cmonapi_db.stat.exists == false
+  tags: controller
 
 - name: Copy ClusterControl UI bootstrap file.
   command: cp "{{ ccui_bootstrap }}.default" {{ ccui_bootstrap }}
   when: ccui_bs.stat.exists == false
+  tags: controller
 
 - name: Configure ClusterControl CMONAPI - bootstrap.php.
   shell: sed -i "s|^define('{{ item.param }}'.*|define('{{ item.param }}', '{{ item.value }}');|g" {{ cmonapi_bootstrap }}
@@ -116,6 +131,7 @@
   when:
     clustercontrol_controller_install_packages and
     clustercontrol_ui_install_packages
+  tags: controller
 
 - name: Configure ClusterControl CMONAPI - database.php.
   shell: sed -i "s|^define('{{ item.param }}'.*|define('{{ item.param }}', '{{ item.value }}');|g" {{ cmonapi_database }}
@@ -125,6 +141,7 @@
   when:
     clustercontrol_controller_install_packages and
     clustercontrol_ui_install_packages
+  tags: controller
 
 - name: Configure ClusterControl UI - bootstrap.php.
   shell: sed -i "s|^define('{{ item.param }}'.*|define('{{ item.param }}', '{{ item.value }}');|g" {{ ccui_bootstrap }}
@@ -135,6 +152,7 @@
   when:
     clustercontrol_controller_install_packages and
     clustercontrol_ui_install_packages
+  tags: controller
 
 - name: Apply correct ownership for ClusterControl UI and CMONAPI (RedHat).
   file:
@@ -150,6 +168,7 @@
     (ansible_os_family == 'RedHat') or
     (ansible_distribution == 'Debian' and ansible_distribution_major_version|int < 8) or
     (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int < 14)
+  tags: controller
 
 - name: Apply correct ownership for ClusterControl UI and CMONAPI (Debian).
   file:
@@ -164,6 +183,7 @@
   when:
     (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 7) or
     (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 12)
+  tags: controller
 
 - name: Ensure bootstrap.php has correct permission.
   file:
@@ -173,10 +193,12 @@
     owner: "{{ apache_user }}"
     group: "{{ apache_user }}"
   when: ansible_os_family == 'Debian'
+  tags: controller
 
 - name: Check if SSH key for user '{{ cmon_ssh_user }}' is exist.
   stat: path={{ cmon_ssh_key_path }}
   register: ssh_key_user
+  tags: controller
 
 - name: Generate SSH key for user '{{ cmon_ssh_user }}'.
   user:
@@ -187,6 +209,7 @@
   register: ssh_key_generate
   when:
     ssh_key_user.stat.exists == false
+  tags: controller
 
 - name: Retrieve the SSH key for user '{{ cmon_ssh_user }}'.
   fetch:
@@ -194,19 +217,23 @@
     src: "{{ cmon_ssh_key_path }}.pub"
     flat: yes
   changed_when: false
+  tags: controller
 
 - name: Authorize SSH key to itself.
   authorized_key:
     user: "{{ cmon_ssh_user }}"
     key: "{{ lookup('file', 'tmp/clustercontrol/key.pub') }}"
     state: present
+  tags: controller
 
 - name: Configure known_hosts value for itself.
   shell: ssh-keyscan -H {{ ansible_default_ipv4.address }} >> {{ cmon_ssh_key_dir }}/known_hosts
   when: ssh_key_user.stat.exists == false
+  tags: controller
 
 - name: Remove temp local known_hosts copies.
   local_action: file dest="tmp/clustercontrol/key.pub" state=absent
+  tags: controller
 
 - name: Copy cmon.cnf - ClusterControl Controller configuration.
   template:
@@ -216,7 +243,9 @@
     group: root
     mode: 0600
   notify: restart cmon
+  tags: controller
 
 - name: Ensure ClusterControl Controller is started and enabled on boot.
   service: name=cmon state=started enabled=yes
   register: cmon_service_configuration
+  tags: controller

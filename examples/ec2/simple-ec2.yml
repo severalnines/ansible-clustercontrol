@@ -1,0 +1,19 @@
+- name: Deploy a Galera Cluster and ClusterControl on Amazon EC2.
+  roles:
+    - { role: severalnines.clustercontrol, tags: ec2-deploy }
+
+  vars:
+    cc_admin:
+      - email: "admin@email.com"
+        password: "test123"
+    ec2_deploy:
+      - cluster_type: galera
+        db_nodes: 3
+        region: ap-southeast-1
+        zone: ap-southeast-1b
+        key_name: ashrafawskey
+        group: default
+        instance_type: t2.small
+        image: ami-3f03c55c
+        ec2_user: ec2-user
+        vpc_subnet_id: subnet-9ecc2dfb

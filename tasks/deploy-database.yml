@@ -5,6 +5,7 @@
   ignore_errors: yes
   changed_when: false
   register: service_cmon_status
+  tags: deploy-database
 
 - name: Report status of CMON.
   fail:
@@ -13,16 +14,19 @@
       Return code from `grep`:
       {{ service_cmon_status.rc }}
   when: service_cmon_status.rc != 0
+  tags: deploy-database
 
 - name: Retrieve ClusterControl RPC token.
   shell: "grep rpc_key {{ cmon_config_file }} | cut -d'=' -f2"
   register: rpc_token_retrieved
   when: service_cmon_status.rc == 0
+  tags: deploy-database
 
 - name: Define existing API token.
   set_fact:
     rpc_token: "{{ rpc_token_retrieved.stdout }}"
   when: service_cmon_status.rc == 0
+  tags: deploy-database
 
 - name: Fetch public key from ClusterControl server.
   fetch:
@@ -31,6 +35,7 @@
     flat: yes
   register: cc_pubkeys
   changed_when: false
+  tags: deploy-database
 
 - name: Collect ssh-keyscan on managed DB nodes.
   shell: ssh-keyscan -H {{ key.1 }} >> "/tmp/{{ key.1 }}.pub"
@@ -40,6 +45,7 @@
   ignore_errors: true
   loop_control:
     loop_var: key
+  tags: deploy-database
 
 - name: Fetch known_hosts files from ClusterControl server.
   fetch:
@@ -53,6 +59,7 @@
   ignore_errors: true
   loop_control:
     loop_var: key
+  tags: deploy-database
 
 - name: Setting up known_hosts on ClusterControl server.
   known_hosts:
@@ -64,6 +71,7 @@
   when: cc_cluster.mysql_hostnames is defined
   loop_control:
     loop_var: host
+  tags: deploy-database
 
 - name: Remove temp local known_hosts copies.
   local_action: file dest="tmp/clustercontrol/{{ host.1 }}.pub" state=absent
@@ -73,6 +81,7 @@
     - mysql_hostnames
   loop_control:
     loop_var: host
+  tags: deploy-database
 
 - name: Post create new MySQL Replication cluster operation to ClusterControl.
   uri:
@@ -117,6 +126,7 @@
     create.deployment
   loop_control:
     loop_var: create
+  tags: deploy-database
 
 - name: Post create new Galera Cluster operation to ClusterControl.
   uri:
@@ -161,6 +171,7 @@
     createg.deployment
   loop_control:
     loop_var: createg
+  tags: deploy-database
 
 - name: Post create new MySQL NDB Cluster operation to ClusterControl.
   uri:
@@ -206,7 +217,7 @@
     createn.deployment
   loop_control:
     loop_var: createn
-
+  tags: deploy-database
 
 - name: Post add existing Galera Cluster operation to ClusterControl.
   uri:
@@ -246,3 +257,4 @@
     add.deployment
   loop_control:
     loop_var: add
+  tags: deploy-database
