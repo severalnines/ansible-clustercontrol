@@ -146,7 +146,7 @@ The following playbook will install ClusterControl on 192.168.55.100, setup pass
           - '192.168.55.205'
         mysql_cnf_template: "my.cnf.repl57"
         mysql_datadir: "/var/lib/mysql"
-        mysql_password: "kemahiranhidup"
+        mysql_password: "password"
         mysql_port: 3306
         mysql_version: "5.7"
         ssh_keyfile: "/root/.ssh/id_rsa"
