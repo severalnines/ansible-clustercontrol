@@ -65,23 +65,17 @@ ansible-playbook example-playbook.yml
 
 ## Usage
 
-The role is capable to perform the following:
+The role is capable to perform:
   - Install ClusterControl only
   - Install ClusterControl with automatic deployment:
       - Create a new database cluster
       - Add existing database cluster
+  - Create EC2 instances:
+      - Refer to examples/ec2 directory for example playbooks.
 
 ### Install ClusterControl only
 
-If you would like to install ClusterControl only, just call the ``severalnines.clustercontrol`` role as the following:
-
-```yml
-- hosts: clustercontrol-server
-  roles:
-    - { role: severalnines.clustercontrol }
-```
-
-or, tag it with ``controller``:
+If you would like to install ClusterControl only, just call the ``severalnines.clustercontrol`` role with "controller" tag, as example below:
 
 ```yml
 - hosts: clustercontrol-server
@@ -118,6 +112,7 @@ The following playbook will install ClusterControl on 192.168.55.100, setup pass
   roles:
   - { role: severalnines.clustercontrol, tags: controller }
   vars:
+    controller: true
     cc_admin:
       - email: "admin@email.com"
         password: "test123"
@@ -133,13 +128,14 @@ The following playbook will install ClusterControl on 192.168.55.100, setup pass
   roles:
     - { role: severalnines.clustercontrol, tags: dbnodes }
   vars:
+    dbnodes: true
     clustercontrol_ip_address: 192.168.55.100
-    ssh_user: root
 
 - hosts: clustercontrol
   roles:
     - { role: severalnines.clustercontrol, tags: deploy-database }
   vars:
+    deploy_database: true
     cc_cluster:
       # create new mysql replication. first node is the master
       - deployment: true
@@ -196,8 +192,8 @@ The following playbook will install ClusterControl on 192.168.55.100, setup pass
 ```
 
 ** Take note the following tags in the `role` lines:
- - no tag (default) - Install ClusterControl
- - dbnodes - For all managed nodes to setup passwordless SSH
+ - controller - Install ClusterControl
+ - dbnodes - For all DB nodes to setup passwordless SSH
  - deploy-database - To deploy database after ClusterControl is installed
 
 Variables are mostly similar to keys in JSON job command created in ClusterControl's Cluster Job. If a key:value is not specified, the default value is used.
@@ -214,11 +210,20 @@ If you would like to use non-root user to as ClusterControl's SSH user, ensure t
 
 Then, execute the command with `--ask-become-pass` flag.
 
-## Role Variables
+## Role Tags & Variables
 
-Available variables are listed below, along with default values (see `defaults/main.yml`):
+Available tags and variables are listed below, along with default values (see `defaults/main.yml`):
 
-### MySQL and CMON on ClusterControl node
+### Tags: controller
+
+Use this tag to install ClusterControl.
+
+***Mandatory Variables***
+
+`controller: true`
+- This is required to distinguish which tasks should be called for installing ClusterControl.
+
+***MySQL and CMON on ClusterControl node***
 
 `mysql_root_password: password`
 - The MySQL root user account password. ClusterControl will setup the MySQL root user with this password during the installation.
@@ -238,7 +243,7 @@ Available variables are listed below, along with default values (see `defaults/m
 `cmon_ssh_key_path: /root/.ssh/id_rsa`
 - Location of SSH key file generated for `cmon_ssh_user`. The default value is `/root/.ssh/id_rsa` corresponds to the default cmon_ssh_user. For non-root user, specify `/home/[user]/.ssh/id_rsa` instead.
 
-### Admin Credentials and License
+***Admin Credentials and License***
 
 At the moment, the following options are configurable for ClusterControl. All of them are self-explanatory so we leave it with no description:
 
@@ -254,11 +259,34 @@ cc_license:
     key: "XXXXXXXXXXXXXXXXXXXX"
 ```
 
-### Create new database cluster
+If the above is not specified, both options will not be configured. You will have to create an admin user during the first login. The demo license will be automatically configured once the user creation is completed.
+
+### Tags: dbnodes
+
+Specify this tag to setup passwordless SSH to the DB nodes.
+
+***Mandatory Variables***
+
+`dbnodes: true`
+- This is required to flag which tasks should be called to setup passwordless SSH on the DB nodes.
+
+`clustercontrol_ip_address: <main_ip_address_of_CC_node>`
+- The ClusterControl server IP address. Strictly no hostname. For EC2, you can call the ``hostvars`` items: ``{{ hostvars[groups['tag_group_clustercontrol'][0]]['ec2_ip_address'] }}``
+
+***Optional Variables***
+
+`ssh_user: root`
+- The SSH user that ClusterControl uses to perform passwordless SSH on the DB nodes. Default is root.
+
+### Tags: deploy-database
+
+#### Create new database cluster
 
 Supported create new database cluster:
   - Galera cluster
   - MySQL replication
+
+***Mandatory Variables***
 
 `deployment: true`
 - If true, the role will always send the deployment job to CMON regardless the database cluster is already deployed or not. It's recommended to set it to false once the cluster is successfully created.
@@ -266,11 +294,30 @@ Supported create new database cluster:
 `operation: "create"`
 - This is compulsory for creating new database cluster.
 
-`api_id: 1`
-- API ID for ClusterControl RPC interface. Keep it default is recommended.
-
 `cluster_type: "galera"`
 - Cluster type. Supported values are: galera, replication.
+
+`vendor: "percona"`
+- For Galera cluster:
+  - Codership and Percona - 5.5 and 5.6.
+  - MariaDB - 5.5 and 10.1.
+- For MySQL Replication:
+  - Oracle - 5.7
+  - Percona - 5.7 and 5.6
+  - MariaDB - 10.1
+
+```yml
+mysql_hostnames:
+ - '192.168.1.101'
+ - '192.168.1.102'
+ - '192.168.1.103'
+```
+- List of the MySQL hostnames or IP address for this database cluster.
+
+***Optional Variables***
+
+`api_id: 1`
+- API ID for ClusterControl RPC interface. Keep it default is recommended.
 
 `create_local_repository: false`
 - Create and mirror the current database vendor’s repository and then deploy using the local mirrored repository. This is a preferred option when you have to scale the Galera Cluster in the future, to ensure the newly provisioned node will always have the same version as the rest of the members.
@@ -290,28 +337,11 @@ Supported create new database cluster:
 `generate_token: true`
 - ClusterControl will generate a new RPC token for the cluster. Keep it default is recommended.
 
-`vendor: "percona"`
-- For Galera cluster:
-  - Codership and Percona - 5.5 and 5.6.
-  - MariaDB - 5.5 and 10.1.
-- For MySQL Replication:
-  - Oracle - 5.7
-  - Percona - 5.7 and 5.6
-  - MariaDB - 10.1
-
 `mysql_cnf_template: "my.cnf.galera"`
-- MySQL configuration template file under `/usr/share/cmon/templates`. Keep it default is recommended.
+- MySQL configuration template file under `/usr/share/cmon/templates`. For Galera, use ``my.cnf.galera``. For MySQL 5.7 Replication, use ``my.cnf.repl57``.
 
 `mysql_datadir: "/var/lib/mysql"`
 - Location of MySQL data directory.
-
-```
-mysql_hostnames:
- - '192.168.1.101'
- - '192.168.1.102'
- - '192.168.1.103'
- ```
-- List of the MySQL hostnames or IP address for this database cluster.
 
 `mysql_password: "password"`
 - Specify MySQL root password. ClusterControl will configure the same MySQL root password for all instances in the cluster.
@@ -351,14 +381,13 @@ mysql_hostnames:
 Supported add existing database cluster:
   - Galera cluster
 
+***Mandatory Variables***
+
 `deployment: true`
 - If true, the role will always send the deployment job to CMON regardless the database cluster is already deployed or not. It's recommended to set it to false once the cluster is successfully created.
 
 `operation: "add"`
 - This is compulsory for add existing cluster.
-
-`api_id: 1`
-- API ID for ClusterControl RPC interface. Keep it default is recommended.
 
 `cluster_type: "galera"`
 - Cluster type. Supported value is `galera`.
@@ -369,9 +398,6 @@ Supported add existing database cluster:
   - codershop - MySQL Galera Cluster (5.5/5.6)
   - mariadb - MariaDB Galera Cluster (5.5/10.x)
 
-`mysql_datadir: "/var/lib/mysql"`
-- Location of MySQL data directory.
-
 ```
 mysql_hostnames:
  - '192.168.1.101'
@@ -379,6 +405,14 @@ mysql_hostnames:
  - '192.168.1.103'
  ```
 - List of the MySQL hostnames or IP address for this database cluster.
+
+***Optional Variables***
+
+`api_id: 1`
+- API ID for ClusterControl RPC interface. Keep it default is recommended.
+
+`mysql_datadir: "/var/lib/mysql"`
+- Location of MySQL data directory.
 
 `mysql_password: "password"`
 - Specify MySQL root password. ClusterControl assumes the same MySQL root password for all instances in the cluster.
@@ -406,6 +440,66 @@ mysql_hostnames:
 
 `enable_cluster_autorecovery: true`
 - ClusterControl will perform automatic recovery if it detects the cluster is down or degraded.
+
+### Tags: ec2
+
+***Mandatory Variables***
+
+`create_ec2: true`
+- Mandatory variable for this tag to flag which tasks should be called for launching EC2 instances.
+
+The following shows an example of ec2 items:
+
+```yml
+ec2:
+  - db_nodes: 3
+    db_tags: galeracluster
+    region: us-west-1
+    zone: us-west-1b
+    key_name: mykeypair
+    group: default
+    instance_type: t2.small
+    image: ami-3f03c55c
+    vpc_subnet_id: subnet-9ecc2dfb
+```
+
+Mandatory variables for ``ec2`` item are:
+
+`region: us-west-1`
+- AWS region to launch the instances.
+
+`zone: us-west-1b`
+- AWS availability zone for the specified region value to deploy the instances.
+
+`key_name: mykeypair`
+- The name of the SSH key associated with the instances.
+
+`group: default`
+- AWS availability zone for the specified region value to deploy the instances. Default value is 'default'.
+
+`instance_type: t2.small`
+- The type of instance (e.g. m1.small).
+
+`image: ami-3f03c55c`
+- The ID of the AMI used to launch this instances.
+
+`vpc_subnet_id: subnet-9ecc2dfb`
+- Use AWS VPC is recommended. The subnet ID if you would like to deploy the instances in a VPC.
+
+***Optional Variables (with default values)***
+
+`cc_nodes: 3`
+- Number of database nodes. Default is 3.
+
+`cc_nodes: 1`
+- Number of ClusterControl node. Default is 1.
+
+`db_tags: galeracluster`
+- EC2 tags (name and group) for database nodes. Default is ``galeracluster``. If you change this, you have to set the proper calling in ``hostvars`` and host inventory for the remaining tasks.
+
+`cc_tags: clustercontrol`
+- EC2 tags (name and group) for ClusterControl node. Default is ``clustercontrol``.
+
 
 ## Limitations
 
