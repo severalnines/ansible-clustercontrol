@@ -79,6 +79,11 @@ ansible-galaxy install severalnines.clustercontrol
 ansible-playbook -i /etc/ansible/ec2.py ec2-instances.yml
 ```
 
+Or, you can use the shorter version, simple-ec2.yml:
+```bash
+ansible-playbook -i /etc/ansible/ec2.py simple-ec2.yml
+```
+
 2) Refresh the EC2 cache so the Ansible inventory is updated (important):
 ```bash
 /etc/ansible/ec2.py --refresh-cache
@@ -86,10 +91,11 @@ ansible-playbook -i /etc/ansible/ec2.py ec2-instances.yml
 
 3) Verify if all EC2 instances are reachable by Ansible:
 ```bash
-ansible -m ping tag_set_ansible
+ansible -m ping tag_set_ansible -u ec2-user
 ```
 
 4) Install ClusterControl and deploy the database cluster:
 ```bash
 ansible-playbook -i /etc/ansible/ec2.py deploy-everything.yml
 ```
+
