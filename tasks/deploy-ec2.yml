@@ -1,116 +1,59 @@
-- name: Create instances
-  hosts: localhost
-  gather_facts: False
-
-  tasks:
-    - name: Provision ClusterControl node
-      ec2:
-        count: 1
-        region: {{ itemx.region }}
-        zone: {{ itemx.zone }}
-        key_name: {{ itemx.key_name }}
-        group: {{ itemx.group | default('default') }}
-        instance_type: {{ itemx.instance_type | default ('t2.medium') }}
-        image: {{ itemx.image }}
-        wait: {{ itemx.wait | default('yes') }}
-        wait_timeout: {{ itemx.wait_timeout | default(500) }}
-        volumes:
-          - device_name: {{ itemx.device_name | default('/dev/sda1') }}
-            device_type: {{ itemx.device_type | default('standard') }}
-            volume_size: {{ itemx.volume_size | default(20) }}
-            delete_on_termination: {{ itemx.delete_on_termination | default(true) }}
-        monitoring: {{ itemx.monitoring | default('no') }}
-        vpc_subnet_id: {{ itemx.vpc_subnet_id }}
-        assign_public_ip: {{ itemx.assign_public_ip | default('yes') }}
-        instance_tags:
-          Name: clustercontrol
-          set: ansible
-          group: clustercontrol
-      with_items:
-        - "{{ ec2_deploy }}"
-      tags: ec2
-      loop_control:
-        loop_var: itemx
-
-    - name: Provision Galera nodes
-      ec2:
-        count: {{ itemy.db_nodes | default(3) }}
-        region: {{ itemy.region }}
-        zone: {{ itemy.zone }}
-        key_name: {{ itemy.key_name }}
-        group: {{ itemy.group | default('default') }}
-        instance_type: {{ itemy.instance_type | default ('t2.medium') }}
-        image: {{ itemy.image }}
-        wait: {{ itemy.wait | default('yes') }}
-        wait_timeout: {{ itemy.wait_timeout | default(500) }}
-        volumes:
-          - device_name: {{ itemy.device_name | default('/dev/sda1') }}
-            device_type: {{ itemy.device_type | default('standard') }}
-            volume_size: {{ itemy.volume_size | default(20) }}
-            delete_on_termination: {{ itemy.delete_on_termination | default(true) }}
-        monitoring: {{ itemy.monitoring | default('no') }}
-        vpc_subnet_id: {{ itemy.vpc_subnet_id }}
-        assign_public_ip: {{ itemy.assign_public_ip | default('yes') }}
-        instance_tags:
-          Name: galeracluster
-          set: ansible
-          group: galeracluster
-      with_items:
-        - "{{ ec2_deploy }}"
-      when: itemy.cluster_type == "galera"
-      tags: ec2
-      loop_control:
-        loop_var: itemy
-
-- name: Configure ClusterControl instance.
-  hosts: "tag_group_clustercontrol"
-  become: true
-  user: {{ ec2_deploy.ec2_user[0] }}
-  gather_facts: true
-
-  tasks:
-    - include: deploy-clustercontrol.yml
-      tags: controller
-
-- name: Configure Galera Cluster instances.
-  hosts: "tag_group_galeracluster"
-  user: {{ ec2_deploy.ec2_user[0] }}
-  become: true
-  gather_facts: true
-
-  tasks:
-    - include: setup-passwordless.yml
-      tags: dbnodes
-
-  vars:
-    clustercontrol_ip_address: "{{ hostvars[groups['tag_group_clustercontrol'][0]]['ec2_ip_address'] }}"
-
-- name: Create the Galera cluster.
-  hosts: tag_group_clustercontrol
-  become: true
-  user: {{ ec2_deploy.ec2_user[0] }}
-
-  tasks:
-    - include: deploy-database.yml
-      tags: deploy-database
-
-  vars:
-    cc_cluster:
-      - deployment: true
-        operation: "create"
-        cluster_type: "galera"
-        mysql_cnf_template: "my.cnf.galera"
-        mysql_datadir: "/var/lib/mysql"
-        mysql_hostnames:
-          - "{{ ec2_galera_nodes }}"
-        mysql_password: "password"
-        mysql_port: 3306
-        mysql_version: "5.6"
-        ssh_keyfile: "/root/.ssh/id_rsa"
-        ssh_user: "root"
-        sudo_password: ""
-        vendor: "percona"
+- name: Provision ClusterControl node
+  ec2:
+    count: "{{ itemx.cc_nodes | default(1) }}"
+    region: "{{ itemx.region }}"
+    zone: "{{ itemx.zone }}"
+    key_name: "{{ itemx.key_name }}"
+    group: "{{ itemx.group | default('default') }}"
+    instance_type: "{{ itemx.instance_type | default ('t2.medium') }}"
+    image: "{{ itemx.image }}"
+    wait: "{{ itemx.wait | default('yes') }}"
+    wait_timeout: "{{ itemx.wait_timeout | default(500) }}"
+    volumes:
+      - device_name: "{{ itemx.device_name | default('/dev/sda1') }}"
+        device_type: "{{ itemx.device_type | default('standard') }}"
+        volume_size: "{{ itemx.volume_size | default(20) }}"
+        delete_on_termination: "{{ itemx.delete_on_termination | default(true) }}"
+    monitoring: "{{ itemx.monitoring | default('no') }}"
+    vpc_subnet_id: "{{ itemx.vpc_subnet_id }}"
+    assign_public_ip: "{{ itemx.assign_public_ip | default('yes') }}"
+    instance_tags:
+      Name: "{{ itemx.cc_tags | default('clustercontrol') }}"
+      set: ansible
+      group: "{{ itemx.cc_tags | default('clustercontrol') }}"
   with_items:
-    - "{{ hostvars[groups['tag_group_galeracluster']['ec2_ip_address'] }}"
+    - "{{ ec2 }}"
+  when: create_ec2
+  tags: ec2
   loop_control:
-    loop_var: ec2_galera_nodes
+    loop_var: itemx
+
+- name: Provision Galera nodes
+  ec2:
+    count: "{{ itemy.db_nodes | default(3) }}"
+    region: "{{ itemy.region }}"
+    zone: "{{ itemy.zone }}"
+    key_name: "{{ itemy.key_name }}"
+    group: "{{ itemy.group | default('default') }}"
+    instance_type: "{{ itemy.instance_type | default ('t2.medium') }}"
+    image: "{{ itemy.image }}"
+    wait: "{{ itemy.wait | default('yes') }}"
+    wait_timeout: "{{ itemy.wait_timeout | default(500) }}"
+    volumes:
+      - device_name: "{{ itemy.device_name | default('/dev/sda1') }}"
+        device_type: "{{ itemy.device_type | default('standard') }}"
+        volume_size: "{{ itemy.volume_size | default(20) }}"
+        delete_on_termination: "{{ itemy.delete_on_termination | default(true) }}"
+    monitoring: "{{ itemy.monitoring | default('no') }}"
+    vpc_subnet_id: "{{ itemy.vpc_subnet_id }}"
+    assign_public_ip: "{{ itemy.assign_public_ip | default('yes') }}"
+    instance_tags:
+      Name: "{{ itemy.db_tags | default('galeracluster') }}"
+      set: ansible
+      group: "{{ itemy.db_tags | default('galeracluster') }}"
+  with_items:
+    - "{{ ec2 }}"
+  when: create_ec2
+  tags: ec2
+  loop_control:
+    loop_var: itemy

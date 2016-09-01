@@ -1,17 +1,13 @@
 ---
 
+- include: deploy-ec2.yml
+  when: create_ec2 is defined and create_ec2
+
 - include: deploy-clustercontrol.yml
-  when: clustercontrol_ip_address is undefined
-  tags: controller
+  when: controller is defined and controller
 
 - include: setup-passwordless.yml
-  when: clustercontrol_ip_address is defined
-  tags: dbnodes
+  when: dbnodes is defined and dbnodes
 
-# Perform deployment if cc_cluster is defined
 - include: deploy-database.yml
-  with_items: "{{ cc_cluster }}"
-  when:
-    clustercontrol_ip_address is undefined and
-    item.operation is defined
-  tags: deploy-database
+  when: deploy_database is defined and deploy_database

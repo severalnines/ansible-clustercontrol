@@ -1,8 +1,12 @@
-## Install ClusterControl
+## Install ClusterControl. Mandatory settings:
+## "tags: controller" (roles)
+## "controller: true" (vars)
+
 - hosts: clustercontrol
   roles:
   - { role: severalnines.clustercontrol, tags: controller }
   vars:
+    controller: true
     cc_admin:
       - email: "admin@email.com"
         password: "test123"
@@ -12,21 +16,32 @@
         expired_date: "31/12/2016"
         key: "XXXXXXXXXXXXXXXXXXXX"
 
-# Setup passwordless SSH to managed nodes
+## ClusterControl requires passwordless SSH to DB node
+## Mandatory settings:
+## "tags: dbnodes" (roles)
+## "dbnodes: true" (vars)
+## "clustercontrol_ip_address: <cc_node_ip_address>"
+
 - hosts:
     - mysql-replication
     - galera
   roles:
     - { role: severalnines.clustercontrol, tags: dbnodes }
   vars:
+    dbnodes: true
     clustercontrol_ip_address: 192.168.55.100
-    ssh_user: root
 
-# DB/Cluster deployment
+## To deploy database, the following task must be running on CC
+## Mandatory settings:
+## "tags: deploy-database" (roles)
+## "deploy_database: true" (vars)
+## "cc_cluster: [deployment items]" (vars)
+
 - hosts: clustercontrol
   roles:
     - { role: severalnines.clustercontrol, tags: deploy-database }
   vars:
+    deploy_database: true
     cc_cluster:
       # deployment=true will always send job to CMON. Set to false once deployed
       # example create new replication. first node is the master

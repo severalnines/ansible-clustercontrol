@@ -1,25 +1,21 @@
 - name: Configure ClusterControl instance.
   hosts: tag_group_clustercontrol
   become: true
-  user: ec2-user
+  user: ubuntu
   gather_facts: true
 
   roles:
     - { role: severalnines.clustercontrol, tags: controller }
 
   vars:
+    controller: true
     cc_admin:
       - email: "admin@email.com"
         password: "test123"
-    cc_license:
-      - email: "demo@severalnines.com"
-        company: "Severalnines"
-        expired_date: "31/12/2016"
-        key: "XXXXXXXXXXXXXXXXXXXX"
 
 - name: Configure Galera Cluster instances.
   hosts: tag_group_galeracluster
-  user: ec2-user
+  user: ubuntu
   become: true
   gather_facts: true
 
@@ -27,17 +23,19 @@
     - { role: severalnines.clustercontrol, tags: dbnodes }
 
   vars:
+    dbnodes: true
     clustercontrol_ip_address: "{{ hostvars[groups['tag_group_clustercontrol'][0]]['ec2_ip_address'] }}"
 
 - name: Create the Galera cluster.
   hosts: tag_group_clustercontrol
   become: true
-  user: ec2-user
+  user: ubuntu
 
   roles:
     - { role: severalnines.clustercontrol, tags: deploy-database }
 
   vars:
+    deploy_database: true
     cc_cluster:
       - deployment: true
         operation: "create"

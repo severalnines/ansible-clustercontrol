@@ -146,10 +146,10 @@ mysql_users:
     password: "{{ cmon_mysql_password }}"
     priv: "*.*:ALL,GRANT"
   - name: cmon
-    host: "{{ ansible_fqdn }}"
+    host: "localhost"
     password: "{{ cmon_mysql_password }}"
     priv: "*.*:ALL,GRANT"
   - name: cmon
-    host: "localhost"
+    host: "127.0.0.1"
     password: "{{ cmon_mysql_password }}"
     priv: "*.*:ALL,GRANT"

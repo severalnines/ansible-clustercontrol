@@ -3,6 +3,7 @@
   shell: which mysqld_safe
   register: check_mysqld
   tags: controller
+  ignore_errors: yes
 
 - name: Update apt cache if MySQL is not yet installed.
   apt: update_cache=yes
