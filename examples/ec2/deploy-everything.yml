@@ -1,7 +1,7 @@
 - name: Configure ClusterControl instance.
   hosts: tag_group_clustercontrol
   become: true
-  user: ubuntu
+  user: ec2-user
   gather_facts: true
 
   roles:
@@ -15,7 +15,7 @@
 
 - name: Configure Galera Cluster instances.
   hosts: tag_group_galeracluster
-  user: ubuntu
+  user: ec2-user
   become: true
   gather_facts: true
 
@@ -29,7 +29,7 @@
 - name: Create the Galera cluster.
   hosts: tag_group_clustercontrol
   become: true
-  user: ubuntu
+  user: ec2-user
 
   roles:
     - { role: severalnines.clustercontrol, tags: deploy-database }
