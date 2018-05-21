@@ -6,7 +6,10 @@
 clustercontrol_ui_packages:
   - clustercontrol-cmonapi
   - clustercontrol
-  - clustercontrol-nodejs
+  - clustercontrol-notifications
+  - clustercontrol-ssh
+  - clustercontrol-cloud
+  - clustercontrol-clud
 clustercontrol_controller_packages:
   - clustercontrol-controller
 cmon_config_file: /etc/cmon.cnf
@@ -26,33 +29,36 @@ gpg_key: http://repo.severalnines.com/severalnines-repos.asc
 
 ## Default User ##
 
-# Define admin email address.
-# cc_admin:
-#   - email: "demo@severalnines.com"
-#     password: "test123"
+# Define admin email address and "set: true"
+cc_admin:
+  - set: false
+#   email: "demo@severalnines.com"
+#   password: "test123"
 
 ## License ##
 
-# If you have a valid license, define them here:
-# cc_license:
-#   - email: "demo@severalnines.com"
-#     company: "Severalnines AB"
-#     expired_date: "31/12/2017"
-#     key: "XXXXXXXXXXXXXXXXXXXXXXXX"
+# If you have a valid license, define them here with "set: true":
+cc_license:
+  - set: false
+#   email: "demo@severalnines.com"
+#   company: "Severalnines AB"
+#   expired_date: "31/12/2017"
+#   key: "XXXXXXXXXXXXXXXXXXXXXXXX"
 
 ## LDAP (experimental)##
 
 # If you would like to integrate LDAP authentication with ClusterControl,
-# define the settings here:
-# cc_ldap:
-#   - enabled: 1
-#     host: "192.168.1.100"
-#     port: 389
-#     base_dn: "dc=mydomain,dc=com"
-#     admin_dn: "cn=admin,dc=mydomain,dc=com"
-#     admin_password: "password"
-#     user_dn: "ou=People,dc=mydomain,dc=com"
-#     group_dn: "ou=Group,dc=mydomain,dc=com"
+# define the settings here with "set: true" and "enabled: 1":
+cc_ldap:
+  - set: false
+#   enabled: 1
+#   host: "192.168.1.100"
+#   port: 389
+#   base_dn: "dc=mydomain,dc=com"
+#   admin_dn: "cn=admin,dc=mydomain,dc=com"
+#   admin_password: "password"
+#   user_dn: "ou=People,dc=mydomain,dc=com"
+#   group_dn: "ou=Group,dc=mydomain,dc=com"
 
 ## Database Cluster ##
 
@@ -63,8 +69,8 @@ gpg_key: http://repo.severalnines.com/severalnines-repos.asc
 # once the cluster is successfully created. ClusterControl will deploy/import
 # the cluster including setting up the passwordless SSH:
 
-# cc_cluster:
-# 	- deployment: true
+cc_cluster:
+  - deployment: false
 #     operation: add
 # 	  type: galera
 # 		vendor: percona
@@ -147,12 +153,12 @@ mysql_users:
   - name: cmon
     host: "{{ ansible_default_ipv4.address }}"
     password: "{{ cmon_mysql_password }}"
-    priv: "*.*:ALL,GRANT"
-  - name: cmon
-    host: "{{ ansible_fqdn }}"
-    password: "{{ cmon_mysql_password }}"
-    priv: "*.*:ALL,GRANT"
+    priv: '*.*:ALL,GRANT'
   - name: cmon
     host: "localhost"
     password: "{{ cmon_mysql_password }}"
-    priv: "*.*:ALL,GRANT"
+    priv: '*.*:ALL,GRANT'
+  - name: cmon
+    host: "127.0.0.1"
+    password: "{{ cmon_mysql_password }}"
+    priv: '*.*:ALL,GRANT'

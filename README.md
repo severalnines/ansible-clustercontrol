@@ -1,6 +1,6 @@
 # Ansible Role: ClusterControl
 
-Installs and configures Severalnines ClusterControl on RHEL/CentOS or Debian/Ubuntu servers. It also supports create/add existing database cluster into ClusterControl automatically.
+Installs and configures Severalnines ClusterControl on RHEL/CentOS or Debian/Ubuntu servers. It also supports deploy a new cluster and import existing cluster into ClusterControl automatically.
 
 ## Overview
 
@@ -8,16 +8,15 @@ Installs ClusterControl for your new database node/cluster deployment or on top 
 
 Supported database clusters:
 
- - Galera Cluster for MySQL
+ - MySQL Galera Cluster
  - Percona XtraDB Cluster
- - MariaDB Galera Cluster
- - MySQL Replication
- - MySQL single instance
+ - MariaDB Cluster
+ - MySQL/MariaDB Replication
+ - MySQL Group Replication
  - MySQL Cluster
  - MongoDB Replica Set
  - MongoDB Sharded Cluster
- - TokuMX Cluster
- - PostgreSQL single instance
+ - PostgreSQL Streaming Replication
 
 More details at [Severalnines](http://www.severalnines.com) website.
 
@@ -82,7 +81,7 @@ or, tag it with ``controller``:
     - { role: severalnines.clustercontrol, tags: controller }
 ```
 
-The above is similar to the standard ClusterControl installation using ``install-cc`` script available in our website.
+The above is similar to the standard ClusterControl installation using ``install-cc`` script available in our website. Once the playbook is executed, open ClusterControl UI at http://{ClusterControl_host}/clustercontrol and create the admin user by using email address and password.
 
 ### Install ClusterControl with automatic deployment
 
@@ -110,15 +109,6 @@ The following playbook will install ClusterControl on 192.168.55.100, setup pass
 - hosts: clustercontrol
   roles:
   - { role: severalnines.clustercontrol, tags: controller }
-  vars:
-    cc_admin:
-      - email: "admin@email.com"
-        password: "test123"
-    cc_license:
-      - email: "demo@severalnines.com"
-        company: "Severalnines"
-        expired_date: "31/12/2016"
-        key: "XXXXXXXXXXXXXXXXXXXX"
 
 - hosts:
     - mysql-replication
@@ -239,15 +229,17 @@ Available variables are listed below, along with default values (see `defaults/m
 
 ### Admin Credentials and License
 
-At the moment, the following options are configurable for ClusterControl. All of them are self-explanatory so we leave it with no description:
+At the moment, the following options are configurable for ClusterControl. All of them are self-explanatory so we leave it with no description (default is `set: false`:
 
 Example usage:
 ```yml
 cc_admin:
-  - email: "admin@email.com"
+  - set: true
+    email: "admin@email.com"
     password: "test123"
 cc_license:
-  - email: "demo@severalnines.com"
+  - set: true
+    email: "demo@severalnines.com"
     company: "Severalnines"
     expired_date: "31/12/2016"
     key: "XXXXXXXXXXXXXXXXXXXX"
@@ -261,7 +253,7 @@ Supported create new database cluster:
 
 `deployment: true`
 
-- If true, the role will always send the deployment job to CMON regardless the database cluster is already deployed or not. It's recommended to set it to false once the cluster is successfully created.
+- If true, the role will always send the deployment job to CMON regardless the database cluster is already deployed or not. It's recommended to set it to false once the cluster is successfully created. Default is false.
 
 `operation: "create"`
 
@@ -375,7 +367,7 @@ Supported add existing database cluster:
 
 `deployment: true`
 
-- If true, the role will always send the deployment job to CMON regardless the database cluster is already deployed or not. It's recommended to set it to false once the cluster is successfully created.
+- If true, the role will always send the deployment job to CMON regardless the database cluster is already deployed or not. It's recommended to set it to false once the cluster is successfully created. Default is false.
 
 `operation: "add"`
 
@@ -450,7 +442,7 @@ mysql_hostnames:
 This playbook is built on top of Ansible v1.9.4 and has been tested on following platforms:
 
  - Debian 8.x (jessie)
- - Ubuntu 12.04 LTS (precise)
+ - Ubuntu 12.04 LTS, 14.04 LTS
  - RHEL/CentOS 6/7
 
 ## Author Information

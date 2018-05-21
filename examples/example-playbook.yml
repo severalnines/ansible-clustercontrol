@@ -4,13 +4,29 @@
   - { role: severalnines.clustercontrol, tags: controller }
   vars:
     cc_admin:
-      - email: "admin@email.com"
+      # nothing happens unless 'set: true'
+      - set: false
+        email: "admin@email.com"
         password: "test123"
     cc_license:
-      - email: "demo@severalnines.com"
+      # nothing happens unless 'set: true'
+      - set: false
+        email: "demo@severalnines.com"
         company: "Severalnines"
         expired_date: "31/12/2016"
         key: "XXXXXXXXXXXXXXXXXXXX"
+    cc_ldap:
+      # nothing happens unless 'set: true'
+      - set: false
+        enabled: 1
+        host: "192.168.1.100"
+        port: 389
+        base_dn: "dc=mydomain,dc=com"
+        admin_dn: "cn=admin,dc=mydomain,dc=com"
+        admin_password: "password"
+        user_dn: "ou=People,dc=mydomain,dc=com"
+        group_dn: "ou=Group,dc=mydomain,dc=com"
+
 
 # Setup passwordless SSH to managed nodes
 - hosts:

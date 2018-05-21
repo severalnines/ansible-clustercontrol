@@ -62,7 +62,8 @@
   when:
     item.email    is defined and
     item.password is defined and
-    api_rpc_token is defined
+    api_rpc_token is defined and
+    item.set
 
 - name: Configure ClusterControl license.
   shell: >
@@ -76,7 +77,8 @@
     item.email        is defined and
     item.company      is defined and
     item.expired_date is defined and
-    item.key          is defined
+    item.key          is defined and
+    item.set
 
 - name: Configure ClusterControl LDAP settings.
   shell: >
@@ -94,7 +96,8 @@
     item.admin_password is defined and
     item.base_dn        is defined and
     item.user_dn        is defined and
-    item.group_dn       is defined
+    item.group_dn       is defined and
+    item.set
 
 - name: Copy CMONAPI bootstrap file.
   command: cp "{{ cmonapi_bootstrap }}.default" {{ cmonapi_bootstrap }}
@@ -215,7 +218,11 @@
     owner: root
     group: root
     mode: 0600
-  notify: restart cmon
+  notify: 
+    - restart cmon
+    - restart cmon-ssh
+    - restart cmon-cloud
+    - restart cmon-events
 
 - name: Ensure ClusterControl Controller is started and enabled on boot.
   service: name=cmon state=started enabled=yes

@@ -46,12 +46,12 @@
   mysql_db: "name='test' state=absent"
 
 - name: Check if ClusterControl Controller database is exist.
-  command: mysqlshow 'cmon' > /dev/null
+  command: mysqlshow 'cmon' 'hosts'
   register: cmon_db
   ignore_errors: yes
 
 - name: Check if ClusterControl UI database is exist.
-  command: mysqlshow 'dcps' > /dev/null
+  command: mysqlshow 'dcps' 'apis'
   register: dcps_db
   ignore_errors: yes
 
