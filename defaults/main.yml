@@ -142,7 +142,6 @@ mysql_mysqldump_max_allowed_packet: "64M"
 
 # InnoDB settings.
 mysql_innodb_file_per_table: "1"
-mysql_innodb_additional_mem_pool_size: "20M"
 mysql_innodb_log_file_size: "64M"
 mysql_innodb_log_buffer_size: "8M"
 mysql_innodb_flush_log_at_trx_commit: "1"
