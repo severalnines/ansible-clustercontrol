@@ -41,7 +41,7 @@
 
 - name: Install ClusterControl API token.
   shell: >
-    mysql -NBe
+    mysql -u root -NBe
     "REPLACE INTO dcps.apis
     (id, company_id, user_id, url, token)
     VALUES
@@ -49,10 +49,12 @@
   when:
     clustercontrol_controller_install_packages and
     clustercontrol_ui_install_packages
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 - name: Configure ClusterControl admin credentials.
   shell: >
-    mysql -NBe
+    mysql -u root -NBe
     "SET @salt := (SELECT SUBSTR(CONCAT(MD5(RAND()),MD5(RAND())),1,40));
     REPLACE INTO dcps.users
     (id, company_id, email, password, sa, created, salt, uuid, email_verified)
@@ -64,10 +66,12 @@
     item.password is defined and
     api_rpc_token is defined and
     item.set
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 - name: Configure ClusterControl license.
   shell: >
-    mysql -NBe
+    mysql -u root -NBe
     "REPLACE INTO cmon.license
     (email, company, exp_date, lickey)
     VALUES
@@ -79,10 +83,12 @@
     item.expired_date is defined and
     item.key          is defined and
     item.set
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 - name: Configure ClusterControl LDAP settings.
   shell: >
-    mysql -NBe
+    mysql -u root -NBe
     "REPLACE INTO dcps.ldap_settings
     (id, enable_ldap_auth, host, port, login, password, base_dsn, user_dn, group_dn)
     VALUES
@@ -98,6 +104,8 @@
     item.user_dn        is defined and
     item.group_dn       is defined and
     item.set
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 - name: Copy CMONAPI bootstrap file.
   command: cp "{{ cmonapi_bootstrap }}.default" {{ cmonapi_bootstrap }}

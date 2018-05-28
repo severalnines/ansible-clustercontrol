@@ -1,14 +1,18 @@
 ---
 - name: Disallow root login remotely
-  command: 'mysql -NBe "{{ item }}"'
+  command: 'mysql -u root -NBe "{{ item }}"'
   with_items:
     - DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1')
   changed_when: False
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 - name: Get list of hosts for the root user.
-  command: mysql -NBe 'SELECT Host FROM mysql.user WHERE User = "root" ORDER BY (Host="localhost") ASC'
+  command: mysql -u root -NBe 'SELECT Host FROM mysql.user WHERE User = "root" ORDER BY (Host="localhost") ASC'
   register: mysql_root_hosts
   changed_when: false
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 - name: Check if root password has been configured.
   stat: path="{{ mysql_user_home }}/.my.cnf"
@@ -20,6 +24,8 @@
     'SET PASSWORD FOR "{{ mysql_root_username }}"@"{{ item }}" = PASSWORD("{{ mysql_root_password }}");'
   with_items: "{{ mysql_root_hosts.stdout_lines }}"
   when: root_password_configured.stat.exists == false
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 # Has to be after the root password assignment, for idempotency.
 - name: Copy .my.cnf file with root password credentials.
@@ -31,41 +37,60 @@
     mode: 0600
 
 - name: Get list of hosts for the anonymous user.
-  command: mysql -NBe 'SELECT Host FROM mysql.user WHERE User = ""'
+  command: mysql -u root -NBe 'SELECT Host FROM mysql.user WHERE User = ""'
   register: mysql_anonymous_hosts
   changed_when: false
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 - name: Remove anonymous MySQL users.
   mysql_user:
-     name: ""
-     host: "{{ item }}"
-     state: absent
+    login_host: localhost
+    login_user: "{{ mysql_root_username }}"
+    login_password: ""
+    name: ""
+    host: "{{ item }}"
+    state: absent
   with_items: "{{ mysql_anonymous_hosts.stdout_lines }}"
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 - name: Remove MySQL test database.
-  mysql_db: "name='test' state=absent"
+  mysql_db:
+    login_host: localhost
+    login_user: "{{ mysql_root_username }}"
+    login_password: ""
+    name: test
+    state: absent
 
 - name: Check if ClusterControl Controller database is exist.
-  command: mysqlshow 'cmon' 'hosts'
+  command: mysqlshow -u root 'cmon' 'hosts'
   register: cmon_db
   ignore_errors: yes
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 - name: Check if ClusterControl UI database is exist.
-  command: mysqlshow 'dcps' 'apis'
-  register: dcps_db
+  command: mysqlshow -u root 'dcps' 'apis'
   ignore_errors: yes
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 - name: Import ClusterControl Controller database.
   shell:
-    mysql < "{{ cmon_sql_path }}/cmon_db.sql" &&
-    mysql < "{{ cmon_sql_path }}/cmon_data.sql"
+    mysql -u root < "{{ cmon_sql_path }}/cmon_db.sql" &&
+    mysql -u root < "{{ cmon_sql_path }}/cmon_data.sql"
   register: cmon_db_import
   when: "'Unknown' in cmon_db.stderr"
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 - name: Import ClusterControl UI database.
-  shell: mysql < {{ apache_doc_root }}/clustercontrol/sql/dc-schema.sql
+  shell: mysql -u root < {{ apache_doc_root }}/clustercontrol/sql/dc-schema.sql
   register: ccui_db_import
   when:
     ("'Unknown' in dcps_db.stderr") or
     (rh_clustercontrol_ui_install_packages.changed) or
     (deb_clustercontrol_ui_install_packages.changed)
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
