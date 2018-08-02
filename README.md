@@ -65,7 +65,7 @@ The role is capable to perform the following:
 
 ### Install ClusterControl only
 
-If you would like to install ClusterControl only, just call the ``severalnines.clustercontrol`` role as the following:
+If you would like to install ClusterControl only, just call the ``severalnines.clustercontrol`` role as the following in the playbook:
 
 ```yml
 - hosts: clustercontrol-server
@@ -73,7 +73,7 @@ If you would like to install ClusterControl only, just call the ``severalnines.c
     - { role: severalnines.clustercontrol }
 ```
 
-or, tag it with ``controller``:
+Or, tag it with ``controller``:
 
 ```yml
 - hosts: clustercontrol-server
@@ -81,7 +81,152 @@ or, tag it with ``controller``:
     - { role: severalnines.clustercontrol, tags: controller }
 ```
 
-The above is similar to the standard ClusterControl installation using ``install-cc`` script available in our website. Once the playbook is executed, open ClusterControl UI at http://{ClusterControl_host}/clustercontrol and create the admin user by using email address and password.
+The above is similar to the standard ClusterControl installation using `install-cc` script available in our website. Once the playbook is executed, open ClusterControl UI at http://{ClusterControl_host}/clustercontrol and create the admin user by using email address and password.
+
+#### Using Vault in playbooks
+
+The following example shows the steps to use Ansible Vault to encrypt the ``mysql_root_password`` and ``cmon_mysql_password`` configured on the ClusterControl host.
+
+``mysql_root_password``: myrootsecret
+``cmon_mysql_password``: cmonpassw0rd
+
+1) Create a password file to encrypt variables on the host where the playbook resides, called ``password-file``:
+
+```bash
+$ echo -n 'thisismysecrettoencrypt' > password-file
+```
+
+
+2) Generate the Vault value for ``mysql_root_password`` variable using the same password file:
+
+```bash
+$ echo -n 'myrootsecret' | ansible-vault encrypt_string --vault-id dev@password-file --stdin-name 'mysql_root_password'
+Reading plaintext input from stdin. (ctrl-d to end input)
+mysql_root_password: !vault |
+          $ANSIBLE_VAULT;1.2;AES256;dev
+          34643531626238366432363932353565336639396661326638393365343031373838666236353661
+          3739373864643066363432643035613564653437653935370a396133633630333338333339353531
+          39336532633263366437376266636534386533303732336562303733636231373139323533656362
+          3765353865356333310a663263613837396362303063656361663166376133386331393265313465
+          6562
+Encryption successful
+```
+
+3) Generate the Vault value for ``cmon_mysql_password`` variable using the same password file:
+
+```bash
+$ echo -n 'cmonpassw0rd' | ansible-vault encrypt_string --vault-id dev@password-file --stdin-name 'cmon_mysql_password'
+Reading plaintext input from stdin. (ctrl-d to end input)
+cmon_mysql_password: !vault |
+          $ANSIBLE_VAULT;1.2;AES256;dev
+          33656633633962363964306365393664623533613831626162333262616666626237636439626137
+          6263303232666561333534336661336361663635383639300a623937353262656564653031313265
+          32653663393534626434633663316635653862366334613234646166666361326363616262663463
+          6463666338616165620a663931656131383238643635646437353935326535353766626339613364
+          3063
+```
+
+4) Then add the vaults variables into the playbook:
+
+```yml
+
+- hosts: clustercontrol
+  roles:
+  - { role: severalnines.clustercontrol, tags: controller }
+  vars:
+    mysql_root_password: !vault |
+          $ANSIBLE_VAULT;1.2;AES256;dev
+          39353462646431303830643763346462666337393730646361656538383130313164653530333363
+          3132343532336537653561386539356136343136663635360a353733653139303364666339663831
+          39373732363363333462373539313331613733333739613663303037633963316437336631383566
+          3334376330363730360a343364623933626362613362303164373130393431333631363464323935
+          3737
+    cmon_mysql_password: !vault |
+          $ANSIBLE_VAULT;1.2;AES256;dev
+          33656633633962363964306365393664623533613831626162333262616666626237636439626137
+          6263303232666561333534336661336361663635383639300a623937353262656564653031313265
+          32653663393534626434633663316635653862366334613234646166666361326363616262663463
+          6463666338616165620a663931656131383238643635646437353935326535353766626339613364
+          3063
+```
+
+5) Run the playbook with correct vault ID:
+
+```bash
+$ ansible-playbook --vault-id=dev@password-file deploy-cc.yml
+```
+
+Variables you may want to encrypt in this role:
+1) `mysql_root_password`
+2) `cmon_mysql_password`
+3) `cc_ldap -> admin_password`
+4) `cc_admin -> password`
+5) `cc_license -> key`
+
+
+Example playbook with Ansible Vault on sensitive variables as mentioned above:
+
+```yml
+
+- hosts: clustercontrol
+  roles:
+  - { role: severalnines.clustercontrol, tags: controller }
+  vars:
+    mysql_root_password: !vault |
+          $ANSIBLE_VAULT;1.2;AES256;dev
+          39353462646431303830643763346462666337393730646361656538383130313164653530333363
+          3132343532336537653561386539356136343136663635360a353733653139303364666339663831
+          39373732363363333462373539313331613733333739613663303037633963316437336631383566
+          3334376330363730360a343364623933626362613362303164373130393431333631363464323935
+          3737
+    cmon_mysql_password: !vault |
+          $ANSIBLE_VAULT;1.2;AES256;dev
+          33656633633962363964306365393664623533613831626162333262616666626237636439626137
+          6263303232666561333534336661336361663635383639300a623937353262656564653031313265
+          32653663393534626434633663316635653862366334613234646166666361326363616262663463
+          6463666338616165620a663931656131383238643635646437353935326535353766626339613364
+          3063
+    cc_admin:
+      - set: true
+        email: "my@severalnines.com"
+        password: !vault |
+          $ANSIBLE_VAULT;1.2;AES256;dev
+          30219633633962363964306365393664623533613831626162333262616666626237636439626139
+          2263303232666561333534336661336361663635383639300a623937353262656564653031313262
+          32653663393534626434633663316635653862366334613234646166666361326363616262663461
+          6463666338616165620a663931656131383238643635646437353935326535353766626339613341
+          9163
+    cc_license:
+      - set: true
+        email: "my@severalnines.com"
+        company: "My Company"
+        expired_date: "31/12/2020"
+        key: !vault |
+          $ANSIBLE_VAULT;1.2;AES256;dev
+          38373639386536656233656264613164373531613235633037653837653835343466393136336631
+          3461663137636135633461366461366565383330353037340a346131343339633239383730346533
+          38636331663333613131353635393034613232656230356439393262343662373033343530343632
+          6336376138333831300a313938373439656261656264336165323831383363653963636562303837
+          3435
+    cc_ldap:
+      - set: true
+        enabled: 1
+        host: "ldaps://directory.severalnines.com"
+        port: 636
+        base_dn: "dc=severalnines,dc=com"
+        admin_dn: "cn=Administrator,dc=severalnines,dc=com"
+        admin_password: !vault |
+          $ANSIBLE_VAULT;1.2;AES256;dev
+          37373639386536656233656264613164373531613235633037653837653835343466393136336631
+          1461663137636135633461366461366565383330353037340a346131343339633239383730346539
+          88636331663333613131353635393034613232656230356439393262343662373033343530343620
+          6336376138333831300a313938373439656261656264336165323831383363653963636562303839
+          3881
+        user_dn: "ou=Users,dc=severalnines,dc=com"
+        group_dn: "ou=Group,dc=severalnines,dc=com"
+```
+
+Once the playbook is executed, open ClusterControl UI at http://{ClusterControl_host}/clustercontrol and login with settings defined under `cc_admin` section.
 
 ### Install ClusterControl with automatic deployment
 
@@ -229,7 +374,7 @@ Available variables are listed below, along with default values (see `defaults/m
 
 ### Admin Credentials and License
 
-At the moment, the following options are configurable for ClusterControl. All of them are self-explanatory so we leave it with no description (default is `set: false`:
+At the moment, the following options are configurable for ClusterControl. All of them are self-explanatory so we leave it with no description (default is `set: false`).
 
 Example usage:
 ```yml
@@ -244,6 +389,34 @@ cc_license:
     expired_date: "31/12/2016"
     key: "XXXXXXXXXXXXXXXXXXXX"
 ```
+
+### LDAP Settings
+
+If you would like to integrate LDAP authentication (OpenLDAP, Active Directory, FreeIPA) with ClusterControl, define the settings here with `set: true` and `enabled: 1`:
+
+```yml
+cc_ldap:
+  - set: true
+    enabled: 1
+    host: "192.168.1.100"
+    port: 389
+    base_dn: "dc=mydomain,dc=com"
+    admin_dn: "cn=admin,dc=mydomain,dc=com"
+    admin_password: "password"
+    user_dn: "ou=People,dc=mydomain,dc=com"
+    group_dn: "ou=Group,dc=mydomain,dc=com"
+```
+
+`host: {FQDN or LDAPS URL}`
+
+- For LDAP, specify FQDN, hostname or IP address should be enough. With LDAPS, use `ldaps://{FQDN}`. This is compulsory.
+
+`port: 389`
+
+- Default to null. Specify the LDAP server port.
+
+`base_dn: `
+
 
 ### Create new database cluster
 

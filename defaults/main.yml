@@ -72,38 +72,38 @@ cc_ldap:
 cc_cluster:
   - deployment: false
 #     operation: add
-# 	  type: galera
-# 		vendor: percona
-# 	  mysql_hostnames: 
+#     type: galera
+#     vendor: percona
+#     mysql_hostnames: 
 #       - '192.168.1.171'
 #       - '192.168.1.172'
 #       - '192.168.1.173'
-# 		mysql_port: 3306
-# 		mysql_user: "root"
-# 	  mysql_password: "mypassword"
-# 		ssh_user: "root"
-# 		ssh_keyfile: "/root/.ssh/id_rsa"
-# 		ssh_port: 22
-# 		sudo_password: ""
+#     mysql_port: 3306
+#     mysql_user: "root"
+#     mysql_password: "mypassword"
+#     ssh_user: "root"
+#     ssh_keyfile: "/root/.ssh/id_rsa"
+#     ssh_port: 22
+#     sudo_password: ""
 #     enable_node_autorecovery: true
 #     enable_cluster_autorecovery: true
-# 	- deployment: true
+# - deployment: true
 #     operation: create
-# 	  type: replication
-# 	  mysql_version: "5.7"
+#     type: replication
+#     mysql_version: "5.7"
 #     mysql_cnf_template: "my.cnf.repl57"
 #     mysql_datadir: "/var/lib/mysql"
-# 		vendor: oracle
-# 		mysql_hostnames: 
+#     vendor: oracle
+#     mysql_hostnames: 
 #       - '192.168.55.16'
 #       - '192.168.55.17'
-# 		mysql_port: 3306
-# 		mysql_user: "root"
-# 		mysql_password: "mypassword"
-# 		ssh_user: "root"
-# 		ssh_keyfile: "/root/.ssh/id_rsa"
-# 		ssh_port: 22
-# 		sudo_password: ""
+#     mysql_port: 3306
+#     mysql_user: "root"
+#     mysql_password: "mypassword"
+#     ssh_user: "root"
+#     ssh_keyfile: "/root/.ssh/id_rsa"
+#     ssh_port: 22
+#     sudo_password: ""
 
 # =================
 # Managed DB nodes
@@ -142,6 +142,7 @@ mysql_mysqldump_max_allowed_packet: "64M"
 
 # InnoDB settings.
 mysql_innodb_file_per_table: "1"
+mysql_innodb_additional_mem_pool_size: "20M"
 mysql_innodb_log_file_size: "64M"
 mysql_innodb_log_buffer_size: "8M"
 mysql_innodb_flush_log_at_trx_commit: "1"

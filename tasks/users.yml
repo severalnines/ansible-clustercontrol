@@ -1,9 +1,6 @@
 ---
 - name: Ensure MySQL users are present.
   mysql_user:
-    login_host: localhost
-    login_user: "{{ mysql_root_username }}"
-    login_password: ""
     name: "{{ item.name }}"
     host: "{{ item.host | default('localhost') }}"
     password: "{{ item.password }}"
