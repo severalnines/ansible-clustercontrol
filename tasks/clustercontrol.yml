@@ -41,7 +41,7 @@
 
 - name: Install ClusterControl API token.
   shell: >
-    mysql -NBe
+    mysql -u root -NBe
     "REPLACE INTO dcps.apis
     (id, company_id, user_id, url, token)
     VALUES
@@ -49,10 +49,12 @@
   when:
     clustercontrol_controller_install_packages and
     clustercontrol_ui_install_packages
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 - name: Configure ClusterControl admin credentials.
   shell: >
-    mysql -NBe
+    mysql -u root -NBe
     "SET @salt := (SELECT SUBSTR(CONCAT(MD5(RAND()),MD5(RAND())),1,40));
     REPLACE INTO dcps.users
     (id, company_id, email, password, sa, created, salt, uuid, email_verified)
@@ -64,10 +66,12 @@
     item.password is defined and
     api_rpc_token is defined and
     item.set
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 - name: Configure ClusterControl license.
   shell: >
-    mysql -NBe
+    mysql -u root -NBe
     "REPLACE INTO cmon.license
     (email, company, exp_date, lickey)
     VALUES
@@ -79,14 +83,16 @@
     item.expired_date is defined and
     item.key          is defined and
     item.set
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 - name: Configure ClusterControl LDAP settings.
   shell: >
-    mysql -NBe
+    mysql -u root -NBe
     "REPLACE INTO dcps.ldap_settings
-    (id, enable_ldap_auth, host, port, login, password, base_dsn, user_dn, group_dn)
+    (id, enable_ldap_auth, host, port, login, base_dsn, user_dn, group_dn)
     VALUES
-    (1, {{ item.enabled }}, '{{ item.host }}', '{{ item.port }}', '{{ item.admin_dn }}', '{{ item.admin_password }}', '{{ item.base_dn }}', '{{ item.user_dn }}', '{{ item.group_dn }}')"
+    (1, {{ item.enabled }}, '{{ item.host }}', '{{ item.port }}', '{{ item.admin_dn }}', '{{ item.base_dn }}', '{{ item.user_dn }}', '{{ item.group_dn }}')"
   with_items: "{{ cc_ldap }}"
   when:
     item.enabled        is defined and
@@ -98,6 +104,38 @@
     item.user_dn        is defined and
     item.group_dn       is defined and
     item.set
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
+
+- name: Copy encrypt.php to encrypt LDAP password.
+  template:
+    src: "encrypt.php.j2"
+    dest: "{{ apache_doc_root }}/clustercontrol/app/tools/encrypt.php"
+    owner: "{{ apache_user }}"
+    group: "{{ apache_user }}"
+    mode: 0755
+  with_items: "{{ cc_ldap }}"
+  when:
+    item.set
+
+- name: Read ClusterControl UI encryption key.
+  shell: grep Security.cipherSeed "{{ apache_doc_root }}/clustercontrol/app/Config/core.php" | awk {'print $2'} | tr -d "');"
+  args:
+    executable: /bin/bash
+  register: encryption_key
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
+
+- name: Update ClusterControl LDAP encrypted password.
+  shell: php -q encrypt.php '{{ item.admin_password }}' '{{ encryption_key.stdout }}'
+  args:
+    chdir: "{{ apache_doc_root }}/clustercontrol/app/tools"
+  with_items: "{{ cc_ldap }}"
+  when:
+    item.admin_password is defined and
+    item.set
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
 
 - name: Copy CMONAPI bootstrap file.
   command: cp "{{ cmonapi_bootstrap }}.default" {{ cmonapi_bootstrap }}
@@ -218,7 +256,7 @@
     owner: root
     group: root
     mode: 0600
-  notify: 
+  notify:
     - restart cmon
     - restart cmon-ssh
     - restart cmon-cloud
@@ -227,3 +265,4 @@
 - name: Ensure ClusterControl Controller is started and enabled on boot.
   service: name=cmon state=started enabled=yes
   register: cmon_service_configuration
+

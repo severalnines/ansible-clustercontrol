@@ -1,6 +1,8 @@
 ---
 - name: Ensure MySQL users are present.
   mysql_user:
+    login_host: localhost
+    config_file: "{{ mysql_user_home}}/.my.cnf"
     name: "{{ item.name }}"
     host: "{{ item.host | default('localhost') }}"
     password: "{{ item.password }}"
@@ -8,3 +10,6 @@
     state: present
     append_privs: "{{ item.append_privs | default('no') }}"
   with_items: "{{ mysql_users }}"
+  become: yes
+  become_user: "{{ cmon_ssh_user }}"
+
