@@ -87,8 +87,8 @@ The above is similar to the standard ClusterControl installation using `install-
 
 The following example shows the steps to use Ansible Vault to encrypt the ``mysql_root_password`` and ``cmon_mysql_password`` configured on the ClusterControl host.
 
-``mysql_root_password``: myrootsecret
-``cmon_mysql_password``: cmonpassw0rd
+- ``mysql_root_password``: myrootsecret
+- ``cmon_mysql_password``: cmonpassw0rd
 
 1) Create a password file to encrypt variables on the host where the playbook resides, called ``password-file``:
 
@@ -226,7 +226,7 @@ Example playbook with Ansible Vault on sensitive variables as mentioned above:
         group_dn: "ou=Group,dc=severalnines,dc=com"
 ```
 
-Once the playbook is executed, open ClusterControl UI at http://{ClusterControl_host}/clustercontrol and login with settings defined under `cc_admin` section.
+Once the playbook is executed, open ClusterControl UI at http://{ClusterControl_host}/clustercontrol and login with the settings defined under `cc_admin` section.
 
 ### Install ClusterControl with automatic deployment
 
@@ -377,6 +377,7 @@ Available variables are listed below, along with default values (see `defaults/m
 At the moment, the following options are configurable for ClusterControl. All of them are self-explanatory so we leave it with no description (default is `set: false`).
 
 Example usage:
+
 ```yml
 cc_admin:
   - set: true
@@ -389,6 +390,8 @@ cc_license:
     expired_date: "31/12/2016"
     key: "XXXXXXXXXXXXXXXXXXXX"
 ```
+
+**It's highly recommended to use Ansible Vault to store confidential information in the playbook. See 'Using Vault in playbooks' section.**
 
 ### LDAP Settings
 
@@ -407,15 +410,35 @@ cc_ldap:
     group_dn: "ou=Group,dc=mydomain,dc=com"
 ```
 
+**It's highly recommended to use Ansible Vault to store confidential information in the playbook. See 'Using Vault in playbooks' section.**
+
 `host: {FQDN or LDAPS URL}`
 
-- For LDAP, specify FQDN, hostname or IP address should be enough. With LDAPS, use `ldaps://{FQDN}`. This is compulsory.
+- The LDAP server hostname or IP address. To use LDAP over SSL/TLS, specify LDAP URI instead, for example `ldaps://LDAP_host`.
 
 `port: 389`
 
 - Default to null. Specify the LDAP server port.
 
-`base_dn: `
+`base_dn: {distinguished name}`
+
+- The root LDAP node under which all other nodes exist in the directory structure.	
+
+`admin_dn: {distinguished name}`	
+
+- The distinguished name used to bind to the LDAP server. This is often the administrator or manager user. It can also be a dedicated login with minimal access that should be able to return the DN of the authenticating users. ClusterControl must do an LDAP search using this DN before any user can log in. This field is case-sensitive.	
+
+`admin_password: {string}`	
+
+- The password for the binding user specified in `admin_dn`.	
+
+`user_dn: {distinguished name}`	
+
+- The user’s relative distinguished name (RDN) used to bind to the LDAP server. For example, if the LDAP user DN is `CN=userA,OU=People,DC=ldap,DC=domain,DC=com`, specify `OU=People,DC=ldap,DC=domain,DC=com`. This field is case-sensitive.	
+
+`groupd_dn: {distinguished name}`	
+
+- The group’s relative distinguished name (RDN) used to bind to the LDAP server. For example, if the LDAP group DN is `CN=DBA,OU=Group,DC=ldap,DC=domain,DC=com`, specify `OU=Group,DC=ldap,DC=domain,DC=com`. This field is case-sensitive.
 
 
 ### Create new database cluster
