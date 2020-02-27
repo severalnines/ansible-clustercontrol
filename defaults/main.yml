@@ -4,7 +4,6 @@
 # ==============
 
 clustercontrol_ui_packages:
-  - clustercontrol-cmonapi
   - clustercontrol
   - clustercontrol-notifications
   - clustercontrol-ssh
@@ -12,10 +11,12 @@ clustercontrol_ui_packages:
   - clustercontrol-clud
 clustercontrol_controller_packages:
   - clustercontrol-controller
+clustercontrol_cli_packages:
+  - s9s-tools
 cmon_config_file: /etc/cmon.cnf
 cmon_sql_path: /usr/share/cmon
-cmonapi_bootstrap: "{{ apache_doc_root }}/cmonapi/config/bootstrap.php"
-cmonapi_database: "{{ apache_doc_root }}/cmonapi/config/database.php"
+#cmonapi_bootstrap: "{{ apache_doc_root }}/cmonapi/config/bootstrap.php"
+#cmonapi_database: "{{ apache_doc_root }}/cmonapi/config/database.php"
 ccui_bootstrap: "{{ apache_doc_root }}/clustercontrol/bootstrap.php"
 mysql_root_username: root
 mysql_root_password: password
@@ -142,7 +143,6 @@ mysql_mysqldump_max_allowed_packet: "64M"
 
 # InnoDB settings.
 mysql_innodb_file_per_table: "1"
-mysql_innodb_additional_mem_pool_size: "20M"
 mysql_innodb_log_file_size: "64M"
 mysql_innodb_log_buffer_size: "8M"
 mysql_innodb_flush_log_at_trx_commit: "1"

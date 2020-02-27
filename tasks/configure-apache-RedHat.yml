@@ -4,6 +4,36 @@
     dest={{ apache_config }} regexp='AllowOverride None' replace='AllowOverride All'
   notify: restart apache
 
+- name: Check if Apache definition file exists (HTTP).
+  stat: path={{ apache_s9s_config }}
+  register: s9s_conf_copied
+  when: ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 7
+
+- name: Configure Apache definition for HTTP.
+  copy: 
+    src: "{{ apache_doc_root }}/clustercontrol/app/tools/apache2/s9s.conf"
+    dest: "{{ apache_s9s_config }}"
+    owner: root
+    group: root
+    mode: '0644'
+    remote_src: yes
+  when: s9s_conf_copied.stat.exists == false and ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 7
+
+- name: Check if Apache definition file exists (HTTPS).
+  stat: path={{ apache_ssl_config }}
+  register: s9s_ssl_conf_copied
+  when: ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 7
+
+- name: Configure Apache definition for HTTPS.
+  copy:
+    remote_src: "{{ apache_doc_root }}/clustercontrol/app/tools/apache2/s9s-ssl.conf"
+    dest: "{{ apache_ssl_config }}"
+    owner: root
+    group: root
+    mode: '0644'
+    remote_src: yes
+  when: s9s_ssl_conf_copied.stat.exists == false and ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 7
+
 - name: Check if SSL key file is exist.
   stat: path={{ key_file }}
   register: ssl_key_copied
@@ -13,11 +43,11 @@
   register: ssl_cert_copied
 
 - name: Copy SSL key file.
-  command: mv {{ apache_doc_root}}/cmonapi/ssl/server.key {{ key_file }}
+  command: mv {{ apache_doc_root }}/clustercontrol/ssl/server.key {{ key_file }}
   when: ssl_key_copied.stat.exists == false
 
 - name: Copy SSL cert file.
-  command: mv {{ apache_doc_root}}/cmonapi/ssl/server.crt {{ cert_file }}
+  command: mv {{ apache_doc_root }}/clustercontrol/ssl/server.crt {{ cert_file }}
   when: ssl_cert_copied.stat.exists == false
 
 - name: Configure SSL key file.

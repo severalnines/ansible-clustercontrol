@@ -1,18 +1,16 @@
 ---
-- name: Disable SElinux.
+- name: Disabling SElinux.
   selinux: state=disabled
 
-- name: Ensure MySQL packages are installed.
-  yum: name={{ item }} state=installed
-  with_items: "{{ mysql_packages }}"
+- name: Installing MySQL packages.
+  yum: name={{ mysql_packages }} state=present
   register: rh_mysql_install_packages
 
 - name: Ensure MySQL Python libraries are installed.
-  yum: "name=MySQL-python state=installed"
+  yum: name={{ python_mysql }} state=present
 
 - name: Ensure Apache packages are installed.
-  yum: name={{ item }} state=installed
-  with_items: "{{ apache_packages }}"
+  yum: name={{ apache_packages }} state=present
   register: rh_apache_install_packages
   notify: restart apache
 
@@ -20,9 +18,13 @@
   stat: path=/etc/sbin/cmon
   register: cmon_installed
 
-- name: Check if Severalnines Repository is configured.
+- name: Installing ClusterControl repository.
   stat: path={{ repo_config_path }}
   register: s9s_repo_installed
+
+- name: Installing ClusterControl CLI repository.
+  stat: path={{ clustercontrol_cli_repository }}
+  register: s9s_cli_repo_installed
 
 - name: Install Severalnines GPG key (yum).
   rpm_key: state=present key={{ gpg_key }}
@@ -32,12 +34,18 @@
   get_url: url={{ repo_config_url }} dest={{ repo_config_path }}
   when: s9s_repo_installed.stat.exists == false
 
+- name: Download Severalnines CLI Repository definition.
+  get_url: url={{ clustercontrol_cli_repository }} dest={{ repo_cli_config_path }}
+  when: s9s_cli_repo_installed.stat.exists == false
+
 - name: Install latest version of ClusterControl Controller packages.
-  yum: name={{ item }} state=latest update_cache=yes
-  with_items: "{{ clustercontrol_controller_packages }}"
+  yum: name={{ clustercontrol_controller_packages }} state=latest update_cache=yes
   register: rh_clustercontrol_controller_install_packages
 
 - name: Install latest version of ClusterControl UI packages.
-  yum: name={{ item }} state=latest update_cache=yes
-  with_items: "{{ clustercontrol_ui_packages }}"
+  yum: name={{ clustercontrol_ui_packages }} state=latest update_cache=yes
   register: rh_clustercontrol_ui_install_packages
+
+- name: Install latest version of ClusterControl CLI package.
+  yum: name={{ clustercontrol_cli_packages }} state=latest
+  register: rh_clustercontrol_cli_install_packages

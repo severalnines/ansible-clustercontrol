@@ -3,3 +3,7 @@ __mysql_daemon: mariadb
 __mysql_packages:
   - mariadb-server
   - mariadb
+clustercontrol_cli_repository: http://repo.severalnines.com/s9s-tools/CentOS_7/s9s-tools.repo
+apache_config: /etc/httpd/conf/httpd.conf
+apache_s9s_config: /etc/httpd/conf.d/s9s.conf
+apache_ssl_config: /etc/httpd/conf.d/ssl.conf

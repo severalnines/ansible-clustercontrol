@@ -1,77 +1,90 @@
 ---
-- name: Check if MySQL is already installed.
+- name: Checking if MySQL is already installed.
   shell: which mysqld_safe
+  ignore_errors: yes
   register: check_mysqld
 
-- name: Update apt cache if MySQL is not yet installed.
+- name: Updating apt cache if MySQL is not yet installed.
   apt: update_cache=yes
   when: check_mysqld.rc != 0
 
-- name: Ensure MySQL packages are installed.
-  apt: name={{ item }} state=installed
-  with_items: "{{ mysql_packages }}"
+- name: Making sure MySQL packages are installed.
+  apt: name={{ mysql_packages }} state=present
   register: deb_mysql_install_packages
 
-- name: Ensure MySQL Python libraries are installed.
-  apt: "name=python-mysqldb state=installed"
-# mysql and remove the logfiles in case the user set a custom log file size.
-- name: Ensure MySQL is stopped after initial install.
+- name: Making sure MySQL Python libraries are installed.
+  apt: name=python-mysqldb state=present
+
+- name: Making sure MySQL is stopped after initial install.
   service: name={{ mysql_daemon }} state=stopped
   when: check_mysqld.rc != 0
 
-- name: Delete innodb log files created by apt package after initial install.
-  file: state=absent path={{ item }}
+- name: Deleting innodb log files created by apt package after initial install.
+  file:
+    path:
+      - "{{ mysql_datadir }}/ib_logfile0"
+      - "{{ mysql_datadir }}/ib_logfile1"
+    state: absent
   when: check_mysqld.rc != 0
-  with_items:
-    - "{{ mysql_datadir }}/ib_logfile0"
-    - "{{ mysql_datadir }}/ib_logfile1"
   notify: start mysql
 
-- name: Check if Apache is already installed.
+- name: Checking if Apache is already installed.
   stat: path=/usr/sbin/apachectl
   register: apache_installed
 
-- name: Update apt cache if Apache is not yet installed.
+- name: Updating apt cache if Apache is not yet installed.
   apt: update_cache=yes
   when: apache_installed.stat.exists == false
 
-- name: Ensure Apache packages are installed.
-  apt: name={{ item }} state=installed
-  with_items: "{{ apache_packages }}"
+- name: Installing Apache packages.
+  apt: name={{ apache_packages }} state=present
   register: deb_apache_install_packages
 
-- name: Enable Apache module (ssl and rewrite).
-  apache2_module: name={{ item }} state=present
-  with_items:
-    - ssl
-    - rewrite
+- name: Enabling Apache module (ssl).
+  apache2_module: name=ssl state=present
   notify: restart apache
 
-- name: Check if ClusterControl Controller is already installed.
+- name: Enabling Apache module (rewrite).
+  apache2_module: name=rewrite state=present
+  notify: restart apache
+
+- name: Checking if ClusterControl Controller is already installed.
   stat: path=/etc/sbin/cmon
   register: cmon_installed
 
-- name: Check if Severalnines Repository is configured.
+- name: Configuring ClusterControl package repository.
   stat: path={{ repo_config_path }}
   register: s9s_repo_installed
 
-- name: Install Severalnines GPG key (apt)
+- name: Installing ClusterControl CLI GPG key (apt)
+  apt_key:
+    url: "{{ clustercontrol_cli_key }}"
+    state: present
+
+- name: Configuring ClusterControl CLI repository.
+  apt_repository:
+    repo: "{{ clustercontrol_cli_repository }}"
+    state: present
+
+- name: Installing Severalnines GPG key (apt)
   apt_key: state=present url={{ gpg_key }}
   when: s9s_repo_installed.stat.exists == false
 
-- name: Download Severalnines Repository definition.
+- name: Installing ClusterControl repository.
   get_url: url={{ repo_config_url }} dest={{ repo_config_path }}
   when: s9s_repo_installed.stat.exists == false
 
-- name: Update apt cache if ClusterControl is not yet installed.
+- name: Updating apt cache if ClusterControl is not yet installed.
   apt: update_cache=yes
 
-- name: Install latest version of ClusterControl Controller packages.
-  apt: name={{ item }} state=latest
-  with_items: "{{ clustercontrol_controller_packages }}"
+- name: Installing latest version of ClusterControl Controller packages.
+  apt: name={{ clustercontrol_controller_packages }} state=latest
   register: deb_clustercontrol_controller_install_packages
 
-- name: Install latest version of ClusterControl UI packages.
-  apt: name={{ item }} state=latest
-  with_items: "{{ clustercontrol_ui_packages }}"
+- name: Installing latest version of ClusterControl UI packages.
+  apt: name={{ clustercontrol_ui_packages }} state=latest
   register: deb_clustercontrol_ui_install_packages
+
+- name: Installing latest version of ClusterControl CLI package.
+  apt: name={{ clustercontrol_cli_packages }} state=latest
+  register: deb_clustercontrol_cli_install_packages

@@ -8,15 +8,14 @@ Installs ClusterControl for your new database node/cluster deployment or on top 
 
 Supported database clusters:
 
- - MySQL Galera Cluster
- - Percona XtraDB Cluster
- - MariaDB Cluster
  - MySQL/MariaDB Replication
- - MySQL Group Replication
+ - Percona XtraDB Cluster
+ - MariaDB Cluster (Galera)
  - MySQL Cluster
  - MongoDB Replica Set
  - MongoDB Sharded Cluster
  - PostgreSQL Streaming Replication
+ - TimescaleDB Streaming Replication
 
 More details at [Severalnines](http://www.severalnines.com) website.
 
@@ -80,6 +79,16 @@ Or, tag it with ``controller``:
   roles:
     - { role: severalnines.clustercontrol, tags: controller }
 ```
+
+For sudo user, use ``become``:
+
+```yml
+- hosts: clustercontrol-server
+  become: yes
+  roles:
+    - { role: severalnines.clustercontrol }
+```
+
 
 The above is similar to the standard ClusterControl installation using `install-cc` script available in our website. Once the playbook is executed, open ClusterControl UI at http://{ClusterControl_host}/clustercontrol and create the admin user by using email address and password.
 
@@ -635,11 +644,11 @@ mysql_hostnames:
 
 ## Limitations
 
-This playbook is built on top of Ansible v1.9.4 and has been tested on following platforms:
+This playbook is built on top of Ansible v2.9.2 and has been tested on the following platforms:
 
- - Debian 8.x (jessie)
- - Ubuntu 12.04 LTS, 14.04 LTS
- - RHEL/CentOS 6/7
+ - Debian 9.x, 10.x
+ - Ubuntu 18.04 LTS
+ - RHEL/CentOS 7/8
 
 ## Author Information
 

@@ -1,0 +1,18 @@
+__apache_packages:
+  - httpd
+  - wget
+  - mailx
+  - cronie
+  - nc
+  - bind-utils
+  - curl
+  - php
+  - php-mysqlnd
+  - php-gd
+  - php-ldap
+  - php-json
+  - php-xml
+  - mod_ssl
+  - openssl
+python_mysql: python3-PyMySQL
+clustercontrol_cli_repository: http://repo.severalnines.com/s9s-tools/CentOS_8/s9s-tools.repo

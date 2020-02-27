@@ -21,6 +21,7 @@ __apache_packages:
   - php-mysql
   - php-gd
   - php-ldap
+  - php-xml
   - mod_ssl
   - openssl
 apache_doc_root: /var/www/html
@@ -30,4 +31,7 @@ cert_file: /etc/pki/tls/certs/s9server.crt
 key_file: /etc/pki/tls/certs/s9server.key
 repo_config_dir: /etc/yum.repos.d
 repo_config_path: /etc/yum.repos.d/s9s-repo.repo
+repo_cli_config_path: /etc/yum.repos.d/s9s-tools.repo
 repo_config_url: http://www.severalnines.com/downloads/cmon/s9s-repo.repo
+clustercontrol_cli_repository: http://repo.severalnines.com/s9s-tools/CentOS_6/s9s-tools.repo
+python_mysql: MySQL-python

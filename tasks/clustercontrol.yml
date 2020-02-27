@@ -1,43 +1,44 @@
 ---
-- name: Check if CMON configuration file is exist.
+- name: Check if CMON configuration does exist.
   stat: path={{ cmon_config_file }}
   register: cmon_cnf
 
-- name: Check if CMONAPI bootstrap file is exist.
-  stat: path={{ cmonapi_bootstrap }}
-  register: cmonapi_bs
-
-- name: Check if CMONAPI database file is exist.
-  stat: path={{ cmonapi_database }}
-  register: cmonapi_db
-
-- name: Check if ClusterControl bootstrap file is exist.
+- name: Check if ClusterControl bootstrap file does exist.
   stat: path={{ ccui_bootstrap }}
   register: ccui_bs
 
-- name: Generating ClusterControl API/RPC token.
+- name: Check if CMON default file exists.
+  stat: path=/etc/default/cmon
+  register: cmon_default
+
+- name: Copy the CMON default file into /etc/default/cmon.
+  template:
+    src: "cmon.default.j2"
+    dest: "/etc/default/cmon"
+    owner: root
+    group: root
+    mode: 0644
+  when:
+    cmon_default.stat.exists == False
+
+- name: Generate ClusterControl RPC token.
   shell: "python -c 'import uuid; print uuid.uuid4()' | sha1sum | cut -f1 -d' '"
   register: api_token
-  when:
-    clustercontrol_controller_install_packages and
-    clustercontrol_ui_install_packages
 
-- name: Retrieve ClusterControl API/RPC token.
-  shell: "grep rpc_key {{ cmon_config_file }} | cut -d'=' -f2"
+- name: Retrieve existing ClusterControl RPC token.
+  shell: "grep ^rpc_key {{ cmon_config_file }} | cut -d'=' -f2"
   register: api_token_retrieved
   when: cmon_cnf.stat.exists == true
 
 - name: Define new API token.
   set_fact:
     api_rpc_token: "{{ api_token.stdout }}"
-  when:
-    clustercontrol_controller_install_packages and
-    clustercontrol_ui_install_packages
+  when: api_token_retrieved.stdout == ""
 
 - name: Define existing API token.
   set_fact:
     api_rpc_token: "{{ api_token_retrieved.stdout }}"
-  when: cmon_cnf.stat.exists == true
+  when: api_token_retrieved.stdout != ""
 
 - name: Install ClusterControl API token.
   shell: >
@@ -137,35 +138,9 @@
   become: yes
   become_user: "{{ cmon_ssh_user }}"
 
-- name: Copy CMONAPI bootstrap file.
-  command: cp "{{ cmonapi_bootstrap }}.default" {{ cmonapi_bootstrap }}
-  when: cmonapi_bs.stat.exists == false
-
-- name: Copy CMONAPI database file.
-  command: cp "{{ cmonapi_database }}.default" {{ cmonapi_database }}
-  when: cmonapi_db.stat.exists == false
-
 - name: Copy ClusterControl UI bootstrap file.
   command: cp "{{ ccui_bootstrap }}.default" {{ ccui_bootstrap }}
   when: ccui_bs.stat.exists == false
-
-- name: Configure ClusterControl CMONAPI - bootstrap.php.
-  shell: sed -i "s|^define('{{ item.param }}'.*|define('{{ item.param }}', '{{ item.value }}');|g" {{ cmonapi_bootstrap }}
-  with_items:
-    - { param: "CMON_TOKEN", value: "{{ api_rpc_token }}" }
-    - { param: "CC_URL", value: "https://{{ ansible_default_ipv4.address }}/clustercontrol" }
-  when:
-    clustercontrol_controller_install_packages and
-    clustercontrol_ui_install_packages
-
-- name: Configure ClusterControl CMONAPI - database.php.
-  shell: sed -i "s|^define('{{ item.param }}'.*|define('{{ item.param }}', '{{ item.value }}');|g" {{ cmonapi_database }}
-  with_items:
-    - { param: "DB_PASS", value: "{{ cmon_mysql_password }}" }
-    - { param: "DB_PORT", value: "{{ cmon_mysql_port }}" }
-  when:
-    clustercontrol_controller_install_packages and
-    clustercontrol_ui_install_packages
 
 - name: Configure ClusterControl UI - bootstrap.php.
   shell: sed -i "s|^define('{{ item.param }}'.*|define('{{ item.param }}', '{{ item.value }}');|g" {{ ccui_bootstrap }}
@@ -173,9 +148,6 @@
     - { param: "DB_PASS", value: "{{ cmon_mysql_password }}" }
     - { param: "DB_PORT", value: "{{ cmon_mysql_port }}" }
     - { param: "RPC_TOKEN", value: "{{ api_rpc_token }}" }
-  when:
-    clustercontrol_controller_install_packages and
-    clustercontrol_ui_install_packages
 
 - name: Apply correct ownership for ClusterControl UI and CMONAPI (RedHat).
   file:
@@ -185,7 +157,6 @@
     group: "{{ apache_user }}"
     recurse: yes
   with_items:
-    - "{{ apache_doc_root }}/cmonapi"
     - "{{ apache_doc_root }}/clustercontrol"
   when:
     (ansible_os_family == 'RedHat') or
@@ -200,7 +171,6 @@
     owner: "{{ apache_user }}"
     group: "{{ apache_user }}"
   with_items:
-    - { dest: "{{ apache_doc_root }}/cmonapi", src: "/var/www/cmonapi" }
     - { dest: "{{ apache_doc_root }}/clustercontrol", src: "/var/www/clustercontrol" }
   when:
     (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 7) or
@@ -266,3 +236,11 @@
   service: name=cmon state=started enabled=yes
   register: cmon_service_configuration
 
+- name: Ensure ClusterControl Cloud is started and enabled on boot.
+  service: name=cmon-cloud state=started enabled=yes
+
+- name: Ensure ClusterControl SSH is started and enabled on boot.
+  service: name=cmon-ssh state=started enabled=yes
+
+- name: Ensure ClusterControl Events is started and enabled on boot.
+  service: name=cmon-events state=started enabled=yes
