@@ -59,6 +59,9 @@
   when: cmon_ssh_user != 'root'
 
 # Installation tasks.
+- include: setup-RedHat8.yml
+  when: ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 8
+
 - include: setup-RedHat.yml
   when: ansible_os_family == 'RedHat'
 
