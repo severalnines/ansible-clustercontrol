@@ -90,7 +90,7 @@ For sudo user, use ``become``:
 ```
 
 
-The above is similar to the standard ClusterControl installation using `install-cc` script available in our website. Once the playbook is executed, open ClusterControl UI at http://{ClusterControl_host}/clustercontrol and create the admin user by using email address and password.
+The above is similar to the standard ClusterControl installation using `install-cc` script available in our website. Once the playbook is executed, open ClusterControl UI at `http://{ClusterControl_host}/clustercontrol` and create the admin user by using email address and password.
 
 #### Using Vault in playbooks
 
@@ -282,9 +282,15 @@ The following playbook will install ClusterControl on 192.168.55.100, setup pass
       - deployment: true
         operation: "create"
         cluster_type: "replication"
-        mysql_hostnames:
-          - '192.168.55.204'
-          - '192.168.55.205'
+        nodes:
+          - hostname: '192.168.55.204' # the first node is the master
+            hostname_data: '192.168.55.204'
+            hostname_internal: ""
+            port: "3306"
+          - hostname: '192.168.55.205'
+            hostname_data: '192.168.55.205'
+            hostname_internal: ""
+            port: "3306"
         mysql_cnf_template: "my.cnf.repl57"
         mysql_datadir: "/var/lib/mysql"
         mysql_password: "password"
@@ -301,10 +307,19 @@ The following playbook will install ClusterControl on 192.168.55.100, setup pass
         operation: "add"
         cluster_type: "galera"
         mysql_password: "password"
-        mysql_hostnames:
-          - '192.168.55.171'
-          - '192.168.55.172'
-          - '192.168.55.173'
+        nodes:
+          - hostname: '192.168.55.171'
+            hostname_data: '192.168.55.171'
+            hostname_internal: ""
+            port: "3306"
+          - hostname: '192.168.55.172'
+            hostname_data: '192.168.55.172'
+            hostname_internal: ""
+            port: "3306"
+          - hostname: '192.168.55.173'
+            hostname_data: '192.168.55.173'
+            hostname_internal: ""
+            port: "3306"
         ssh_keyfile: "/root/.ssh/id_rsa"
         ssh_port: 22
         ssh_user: root
@@ -317,12 +332,21 @@ The following playbook will install ClusterControl on 192.168.55.100, setup pass
       - deployment: true
         operation: "create"
         cluster_type: "galera"
-        mysql_cnf_template: "my.cnf.galera"
+        mysql_cnf_template: "my.cnf.galera" # Use my.cnf.mdb10x-galera" for MariaDB Galera
         mysql_datadir: "/var/lib/mysql"
-        mysql_hostnames:
-          - '192.168.55.191'
-          - '192.168.55.192'
-          - '192.168.55.193'
+        nodes:
+          - hostname: '192.168.55.191'
+            hostname_data: '192.168.55.191'
+            hostname_internal: ""
+            port: "3306"
+          - hostname: '192.168.55.192'
+            hostname_data: '192.168.55.192'
+            hostname_internal: ""
+            port: "3306"
+          - hostname: '192.168.55.193'
+            hostname_data: '192.168.55.193'
+            hostname_internal: ""
+            port: "3306"
         mysql_password: "password"
         mysql_port: 3306
         mysql_version: "5.6"
@@ -334,8 +358,8 @@ The following playbook will install ClusterControl on 192.168.55.100, setup pass
 
 ** Take note the following tags in the `role` lines:
  - no tag (default) - Install ClusterControl
- - dbnodes - For all managed nodes to setup passwordless SSH
- - deploy-database - To deploy database after ClusterControl is installed
+ - `dbnode` - For all managed nodes to setup passwordless SSH
+ - `deploy-database` - To deploy database after ClusterControl is installed
 
 Variables are mostly similar to keys in JSON job command created in ClusterControl's Cluster Job. If a key:value is not specified, the default value is used.
 
@@ -431,21 +455,21 @@ cc_ldap:
 
 `base_dn: {distinguished name}`
 
-- The root LDAP node under which all other nodes exist in the directory structure.	
+- The root LDAP node under which all other nodes exist in the directory structure.
 
-`admin_dn: {distinguished name}`	
+`admin_dn: {distinguished name}`
 
-- The distinguished name used to bind to the LDAP server. This is often the administrator or manager user. It can also be a dedicated login with minimal access that should be able to return the DN of the authenticating users. ClusterControl must do an LDAP search using this DN before any user can log in. This field is case-sensitive.	
+- The distinguished name used to bind to the LDAP server. This is often the administrator or manager user. It can also be a dedicated login with minimal access that should be able to return the DN of the authenticating users. ClusterControl must do an LDAP search using this DN before any user can log in. This field is case-sensitive.
 
-`admin_password: {string}`	
+`admin_password: {string}`
 
-- The password for the binding user specified in `admin_dn`.	
+- The password for the binding user specified in `admin_dn`.
 
-`user_dn: {distinguished name}`	
+`user_dn: {distinguished name}`
 
-- The user’s relative distinguished name (RDN) used to bind to the LDAP server. For example, if the LDAP user DN is `CN=userA,OU=People,DC=ldap,DC=domain,DC=com`, specify `OU=People,DC=ldap,DC=domain,DC=com`. This field is case-sensitive.	
+- The user’s relative distinguished name (RDN) used to bind to the LDAP server. For example, if the LDAP user DN is `CN=userA,OU=People,DC=ldap,DC=domain,DC=com`, specify `OU=People,DC=ldap,DC=domain,DC=com`. This field is case-sensitive.
 
-`groupd_dn: {distinguished name}`	
+`groupd_dn: {distinguished name}`
 
 - The group’s relative distinguished name (RDN) used to bind to the LDAP server. For example, if the LDAP group DN is `CN=DBA,OU=Group,DC=ldap,DC=domain,DC=com`, specify `OU=Group,DC=ldap,DC=domain,DC=com`. This field is case-sensitive.
 
@@ -462,7 +486,7 @@ Supported create new database cluster:
 
 `operation: "create"`
 
-- This is compulsory for creating new database cluster.
+- This is mandatory for creating new database cluster.
 
 `api_id: 1`
 
@@ -499,47 +523,59 @@ Supported create new database cluster:
 `vendor: "percona"`
 
 - For Galera cluster:
-  - Codership and Percona - 5.5 and 5.6.
-  - MariaDB - 5.5 and 10.1.
+  - Percona XtraDB Cluster - 5.6 and 5.7.
+  - MariaDB Galera Cluster - 10.3 and 10.4.
 - For MySQL Replication:
-  - Oracle - 5.7
-  - Percona - 5.7 and 5.6
-  - MariaDB - 10.1
+  - Oracle - 5.7 and 8.0
+  - Percona - 5.6, 5.7 and 8.0
+  - MariaDB - 10.3 and 10.4
 
 `mysql_cnf_template: "my.cnf.galera"`
 
-- MySQL configuration template file under `/usr/share/cmon/templates`. For Galera Cluster, use 'my.cnf.galera'. For MySQL 5.7, use 'my.cnf.repl57'. For MySQL replication 5.6/MariaDB, use 'mysql.cnf.repl'.
+- MySQL configuration template file under `/usr/share/cmon/templates`. Use one of the following values accordingly: `my57.cnf.galera`, `my.cnf.80-pxc`, `my.cnf.galera`, `my.cnf.gtid_replication`, `my.cnf.mdb10x-galera`, `my.cnf.mdb10x-replication`, `my.cnf.mdb55-galera`, `my.cnf.mysqlcluster`, `my.cnf.pxc55`, `my.cnf.repl57`, `my.cnf.repl80`, `my.cnf.replication`.
 
 `mysql_datadir: "/var/lib/mysql"`
 
 - Location of MySQL data directory.
 
 ```yml
-mysql_hostnames:
- - '192.168.1.101'
- - '192.168.1.102'
- - '192.168.1.103'
+ nodes:
+   - hostname: '192.168.55.191'
+     hostname_data: '192.168.55.191'
+     hostname_internal: ""
+     port: "3306"
+   - hostname: '192.168.55.192'
+     hostname_data: '192.168.55.192'
+     hostname_internal: ""
+     port: "3306"
+   - hostname: '192.168.55.193'
+     hostname_data: '192.168.55.193'
+     hostname_internal: ""
+     port: "3306"
  ```
 
-- List of the MySQL hostnames or IP address for this database cluster. For MySQL Replication, the first node is the master.
+- List of the database nodes hostnames or IP address for this database cluster. Every value in the `nodes` section can have the following fields:
+
+* `hostname` - Hostname of a node (mandatory).
+* `hostname_data` - Optional hostname of a node to be used for sampling database statistics.
+* `hostname_internal` - Optional hostname of a node to be used for the cluster's internal data communication. ClusterControl should not use this to communicate with any of the nodes.
+* `port` - The database port.
+
+For MySQL Replication, the first node is the master.
 
 `mysql_password: "password"`
 
 - Specify MySQL root password. ClusterControl will configure the same MySQL root password for all instances in the cluster.
 
-`mysql_port: 3306`
-
-- MySQL port for all nodes. Default is 3306.
-
 `mysql_version: "5.6"`
 
 - For Galera cluster:
-  - Codership and Percona - 5.5 and 5.6.
-  - MariaDB - 5.5 and 10.1.
+  - Percona XtraDB Cluster - 5.6 and 5.7.
+  - MariaDB Galera - 10.3 and 10.4.
 - For MySQL Replication:
-  - Oracle - 5.7
-  - Percona - 5.7 and 5.6
-  - MariaDB - 10.1
+  - Oracle - 5.7 and 8.0
+  - Percona - 5.6, 5.7 and 8.0
+  - MariaDB - 10.3 and 10.4
 
 `software_package: true`
 
@@ -568,7 +604,7 @@ mysql_hostnames:
 ### Add existing database cluster
 
 Supported add existing database cluster:
-  - Galera cluster
+  - Galera Cluster
 
 `deployment: true`
 
@@ -576,7 +612,7 @@ Supported add existing database cluster:
 
 `operation: "add"`
 
-- This is compulsory for add existing cluster.
+- This is mandatory for add existing cluster.
 
 `api_id: 1`
 
@@ -589,30 +625,42 @@ Supported add existing database cluster:
 `vendor: "percona"`
 
 - For Galera cluster:
-  - percona - Percona XtraDB Cluster (5.5/5.6)
-  - codershop - MySQL Galera Cluster (5.5/5.6)
-  - mariadb - MariaDB Galera Cluster (5.5/10.x)
+  - percona - Percona XtraDB Cluster (5.6/5.7)
+  - codership - MySQL Galera Cluster (5.6/5.7)
+  - mariadb - MariaDB Galera Cluster (10.3/10.4)
 
 `mysql_datadir: "/var/lib/mysql"`
 
 - Location of MySQL data directory.
 
 ```yml
-mysql_hostnames:
- - '192.168.1.101'
- - '192.168.1.102'
- - '192.168.1.103'
+ nodes:
+   - hostname: '192.168.55.191'
+     hostname_data: '192.168.55.191'
+     hostname_internal: ""
+     port: "3306"
+   - hostname: '192.168.55.192'
+     hostname_data: '192.168.55.192'
+     hostname_internal: ""
+     port: "3306"
+   - hostname: '192.168.55.193'
+     hostname_data: '192.168.55.193'
+     hostname_internal: ""
+     port: "3306"
  ```
 
-- List of the MySQL hostnames or IP address for this database cluster.
+- List of the database nodes hostnames or IP address for this database cluster. Every value in the `nodes` section can have the following fields:
+
+* `hostname` - Hostname of a node (mandatory).
+* `hostname_data` - Optional hostname of a node to be used for sampling database statistics.
+* `hostname_internal` - Optional hostname of a node to be used for the cluster's internal data communication. ClusterControl should not use this to communicate with any of the nodes.
+* `port` - The database port.
+
+For MySQL Replication, the first node is the master.
 
 `mysql_password: "password"`
 
 - Specify MySQL root password. ClusterControl assumes the same MySQL root password for all instances in the cluster.
-
-`mysql_port: 3306`
-
-- MySQL port for all nodes. Default is 3306.
 
 `galera_version: "3.x"`
 
