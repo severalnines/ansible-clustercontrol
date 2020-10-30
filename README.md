@@ -555,11 +555,10 @@ Supported create new database cluster:
  ```
 
 - List of the database nodes hostnames or IP address for this database cluster. Every value in the `nodes` section can have the following fields:
-
-* `hostname` - Hostname of a node (mandatory).
-* `hostname_data` - Optional hostname of a node to be used for sampling database statistics.
-* `hostname_internal` - Optional hostname of a node to be used for the cluster's internal data communication. ClusterControl should not use this to communicate with any of the nodes.
-* `port` - The database port.
+  * `hostname` - Hostname of a node (mandatory).
+  * `hostname_data` - Optional hostname of a node to be used for sampling database statistics.
+  * `hostname_internal` - Optional hostname of a node to be used for the cluster's internal data communication. ClusterControl should not use this to communicate with any of the nodes.
+  * `port` - The database port.
 
 For MySQL Replication, the first node is the master.
 
@@ -650,11 +649,10 @@ Supported add existing database cluster:
  ```
 
 - List of the database nodes hostnames or IP address for this database cluster. Every value in the `nodes` section can have the following fields:
-
-* `hostname` - Hostname of a node (mandatory).
-* `hostname_data` - Optional hostname of a node to be used for sampling database statistics.
-* `hostname_internal` - Optional hostname of a node to be used for the cluster's internal data communication. ClusterControl should not use this to communicate with any of the nodes.
-* `port` - The database port.
+  * `hostname` - Hostname of a node (mandatory).
+  * `hostname_data` - Optional hostname of a node to be used for sampling database statistics.
+  * `hostname_internal` - Optional hostname of a node to be used for the cluster's internal data communication. ClusterControl should not use this to communicate with any of the nodes.
+  * `port` - The database port.
 
 For MySQL Replication, the first node is the master.
 
