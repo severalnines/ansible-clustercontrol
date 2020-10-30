@@ -26,7 +26,7 @@
 
 - name: Configure Apache definition for HTTPS.
   copy:
-    remote_src: "{{ apache_doc_root }}/clustercontrol/app/tools/apache2/s9s-ssl.conf"
+    src: "{{ apache_doc_root }}/clustercontrol/app/tools/apache2/s9s-ssl.conf"
     dest: "{{ apache_ssl_config }}"
     owner: root
     group: root
