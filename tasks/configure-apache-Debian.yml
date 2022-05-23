@@ -75,6 +75,13 @@
   service: "name={{ apache_daemon }} state=started enabled=yes"
   register: apache_service_configuration
 
+- name: Enable Apache2 modules (headers)
+  apache2_module:
+    state: present
+    name: headers
+    ignore_configcheck: yes
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 7) or (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 12)
+
 - name: Enable Apache2 modules (proxy)
   apache2_module:
     state: present
