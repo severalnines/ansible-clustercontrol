@@ -14,14 +14,14 @@ __apache_packages:
   - apache2
   - curl
   - dnsutils
-  - php-common
-  - php-mysql
-  - php-gd
-  - php-ldap
-  - php-curl
-  - libapache2-mod-php
-  - php-json
-  - php-xml
+  - php7.4-common
+  - php7.4-mysql
+  - php7.4-gd
+  - php7.4-ldap
+  - php7.4-curl
+  - libapache2-mod-php7.4
+  - php7.4-json
+  - php7.4-xml
 apache_doc_root: /var/www/html
 apache_config: /etc/apache2/sites-available/s9s.conf
 apache_target_config: /etc/apache2/sites-enabled/001-s9s.conf
