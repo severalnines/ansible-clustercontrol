@@ -3,12 +3,20 @@
 # ClusterControl
 # ==============
 
-clustercontrol_ui_packages:
+clustercontrol_ui_packages_v1:
   - clustercontrol
   - clustercontrol-notifications
   - clustercontrol-ssh
   - clustercontrol-cloud
   - clustercontrol-clud
+
+clustercontrol_ui_packages_v2:
+  - clustercontrol2
+  - clustercontrol-notifications
+  - clustercontrol-ssh
+  - clustercontrol-cloud
+  - clustercontrol-clud
+
 clustercontrol_controller_packages:
   - clustercontrol-controller
 clustercontrol_cli_packages:
@@ -27,6 +35,7 @@ cmon_ssh_key_path: /root/.ssh/id_rsa
 cmon_ssh_key_dir: /root/.ssh
 rpc_url: http://localhost:9500
 gpg_key: http://repo.severalnines.com/severalnines-repos.asc
+clustercontrol_version: 1
 
 ## Default User ##
 

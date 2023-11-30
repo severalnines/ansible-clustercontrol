@@ -42,9 +42,16 @@
   yum: name={{ clustercontrol_controller_packages }} state=latest update_cache=yes
   register: rh_clustercontrol_controller_install_packages
 
-- name: Install latest version of ClusterControl UI packages.
-  yum: name={{ clustercontrol_ui_packages }} state=latest update_cache=yes
+- name: Install latest version of ClusterControl v1 UI packages.
+  yum: name={{ clustercontrol_ui_packages_v1 }} state=latest update_cache=yes
   register: rh_clustercontrol_ui_install_packages
+  when: clustercontrol_version == 1
+
+- name: Install latest version of ClusterControl v2 UI packages.
+  yum: name={{ clustercontrol_ui_packages_v2 }} state=latest update_cache=yes
+  register: rh_clustercontrol_ui_install_packages
+  when: clustercontrol_version != 1
+
 
 - name: Install latest version of ClusterControl CLI package.
   yum: name={{ clustercontrol_cli_packages }} state=latest

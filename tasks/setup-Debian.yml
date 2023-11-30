@@ -88,9 +88,16 @@
   apt: name={{ clustercontrol_controller_packages }} state=latest
   register: deb_clustercontrol_controller_install_packages
 
-- name: Installing latest version of ClusterControl UI packages.
-  apt: name={{ clustercontrol_ui_packages }} state=latest
+- name: Installing latest version of ClusterControl v1 UI packages.
+  apt: name={{ clustercontrol_ui_packages_v1 }} state=latest
   register: deb_clustercontrol_ui_install_packages
+  when: clustercontrol_version == 1
+
+- name: Installing latest version of ClusterControl v2 UI packages.
+  apt: name={{ clustercontrol_ui_packages_v1 }} state=latest
+  register: deb_clustercontrol_ui_install_packages
+  when: clustercontrol_version != 1
+
 
 - name: Installing latest version of ClusterControl CLI package.
   apt: name={{ clustercontrol_cli_packages }} state=latest
