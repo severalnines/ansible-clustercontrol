@@ -20,8 +20,7 @@
 - name: Include Debian >= 10 specific variables.
   include_vars: "Debian10.yml"
   when:
-    (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 9) or
-    (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 14)
+    (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 9)
 
 - name: Include Ubuntu >= 22.04 specific variables.
   include_vars: "Ubuntu2204.yml"
