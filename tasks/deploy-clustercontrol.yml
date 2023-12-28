@@ -23,6 +23,11 @@
     (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 9) or
     (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 14)
 
+- name: Include Ubuntu >= 22.04 specific variables.
+  include_vars: "Ubuntu2204.yml"
+  when:
+    (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 22)
+
 - name: Define mysql_packages.
   set_fact:
     mysql_packages: "{{ __mysql_packages | list }}"
