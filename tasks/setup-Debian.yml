@@ -19,7 +19,7 @@
     ansible_distribution == 'Debian' and ansible_distribution_major_version|int <= 10
 
 - name: Making sure MySQL Python3 libraries are installed.
-  apt: name= state=present
+  apt: name=python3-mysqldb state=present
   when:
     ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 18 or
     ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 10
