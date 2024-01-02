@@ -22,6 +22,12 @@
   when:
     (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 9) 
 
+- name: Include Ubuntu >= 20.04 specific variables.
+  include_vars: "Ubuntu2004.yml"
+  when:
+    (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int >= 20)
+
+
 - name: Include Ubuntu >= 22.04 specific variables.
   include_vars: "Ubuntu2204.yml"
   when:
