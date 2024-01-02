@@ -15,12 +15,15 @@
 - name: Making sure MySQL Python libraries are installed.
   apt: name=python-mysqldb state=present
   when:
-    ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int <= 18
+    ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int <= 18 or
+    ansible_distribution == 'Debian' and ansible_distribution_major_version|int <= 10
 
 - name: Making sure MySQL Python3 libraries are installed.
-  apt: name=python3-mysqldb state=present
+  apt: name= state=present
   when:
-    ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 18
+    ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 18 or
+    ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 10
+
 
 - name: Making sure MySQL is stopped after initial install.
   service: name={{ mysql_daemon }} state=stopped
