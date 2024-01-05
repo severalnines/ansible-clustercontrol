@@ -1,0 +1,17 @@
+---
+__apache_packages:
+  - httpd
+  - wget
+  - s-nail
+  - cronie
+  - nc
+  - bind-utils
+  - curl
+  - php
+  - php-mysqlnd
+  - php-gd
+  - php-ldap
+  - php-json
+  - php-xml
+  - mod_ssl
+  - openssl
