@@ -165,7 +165,7 @@
   file:
     path: "{{ item.dest }}"
     src: "{{ item.src }}"
-    state: directory
+    state: link
     owner: "{{ apache_user }}"
     group: "{{ apache_user }}"
   with_items:
