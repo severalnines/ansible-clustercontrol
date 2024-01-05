@@ -11,6 +11,10 @@
   include_vars: "RedHat8.yml"
   when: ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 8
 
+- name: Include Rocky >= 9 specific variables.
+  include_vars: "Rocky9.yml"
+  when: ansible_os_family == 'Rocky' and ansible_distribution_major_version|int >= 9
+
 - name: Include Debian >= 8 specific variables.
   include_vars: "Debian8.yml"
   when:
