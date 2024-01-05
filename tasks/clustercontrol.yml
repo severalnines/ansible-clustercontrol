@@ -171,8 +171,8 @@
   with_items:
     - { dest: "{{ apache_doc_root }}/clustercontrol", src: "/var/www/clustercontrol" }
   when:
-    (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 7) or
-    (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 12)
+    ((ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 7) or
+    (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 12))
 
 - name: Ensure bootstrap.php has correct permission.
   file:

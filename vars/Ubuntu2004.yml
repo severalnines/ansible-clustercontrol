@@ -22,7 +22,7 @@ __apache_packages:
   - libapache2-mod-php
   - php-json
   - php-xml
-apache_doc_root: /var/www
+apache_doc_root: /var/www/html
 apache_config: /etc/apache2/sites-available/default
 apache_target_config: /etc/apache2/sites-enabled/000-default
 apache_ssl_config: /etc/apache2/sites-available/default-ssl
