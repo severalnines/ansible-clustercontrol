@@ -159,15 +159,13 @@
   with_items:
     - "{{ apache_doc_root }}/clustercontrol"
   when:
-    (ansible_os_family == 'RedHat') or
-    (ansible_distribution == 'Debian' and ansible_distribution_major_version|int < 8) or
-    (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int < 14)
+    (ansible_os_family == 'RedHat')
 
 - name: Apply correct ownership for ClusterControl UI and CMONAPI (Debian).
   file:
     path: "{{ item.dest }}"
     src: "{{ item.src }}"
-    state: link
+    state: directory
     owner: "{{ apache_user }}"
     group: "{{ apache_user }}"
   with_items:
