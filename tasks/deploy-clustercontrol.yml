@@ -11,14 +11,15 @@
   include_vars: "RedHat8.yml"
   when: ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 8
 
-#- name: Include Rocky >= 9 specific variables.
-#  include_vars: "Rocky9.yml"
-#  when: ansible_os_family == 'Rocky' and ansible_distribution_major_version|int >= 9
+- name: Include RHEL >= 9 specific variables.
+  include_vars: "RedHat9.yml"
+  when: (ansible_os_family == 'Rocky' and ansible_distribution_major_version|int >= 9) or
+  (ansible_os_family == 'AlmaLinux' and ansible_distribution_major_version|int >= 9) or
+  (ansible_os_family == 'RedHat' and ansible_distribution_major_version|int >= 9)
 
 - name: Include AlmaLinux >= 9 specific variables.
   include_vars: "Alma9.yml"
-  when: ansible_os_family == 'Alma' and ansible_distribution_major_version|int >= 9
-
+  when: ansible_os_family == 'AlmaLinux' and ansible_distribution_major_version|int >= 9
 
 - name: Include Debian >= 8 specific variables.
   include_vars: "Debian8.yml"
