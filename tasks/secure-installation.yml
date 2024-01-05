@@ -18,15 +18,15 @@
   stat: path="{{ mysql_user_home }}/.my.cnf"
   register: root_password_configured
 
-- name: Update MySQL root password for localhost root account.
-  shell: >
-    mysql -u root -NBe
-    'SET PASSWORD FOR "{{ mysql_root_username }}"@"{{ item }}" = PASSWORD("{{ mysql_root_password }}");'
-  with_items: "{{ mysql_root_hosts.stdout_lines }}"
-  when: root_password_configured.stat.exists == false
-  become: yes
-  become_user: "{{ cmon_ssh_user }}"
-  ignore_errors: yes
+#- name: Update MySQL root password for localhost root account.
+#  shell: >
+#    mysql -u root -NBe
+#    'SET PASSWORD FOR "{{ mysql_root_username }}"@"{{ item }}" = PASSWORD("{{ mysql_root_password }}");'
+#  with_items: "{{ mysql_root_hosts.stdout_lines }}"
+#  when: root_password_configured.stat.exists == false
+#  become: yes
+#  become_user: "{{ cmon_ssh_user }}"
+#  ignore_errors: yes
 
 - name: Update MySQL root password for localhost root account.
   community.mysql.mysql_user:
