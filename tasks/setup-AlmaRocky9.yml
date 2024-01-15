@@ -1,5 +1,5 @@
 ---
-- name: Enable crb repo
+- name: Enable epel-release repo
   ansible.builtin.dnf:
     name:
       - epel-release

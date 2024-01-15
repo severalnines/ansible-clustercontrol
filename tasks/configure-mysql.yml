@@ -22,7 +22,8 @@
     force: "{{ overwrite_global_mycnf }}"
   notify: restart mysql
   when:
-    ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int == 20
+    (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int == 20 ) or
+    ((ansible_distribution == 'AlmaLinux' or ansible_distribution == 'Rocky') and ansible_distribution_major_version|int >= 9)
 
 
 - name: Ensure MySQL is started and enabled on boot.
