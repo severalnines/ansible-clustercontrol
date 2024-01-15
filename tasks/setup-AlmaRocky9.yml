@@ -3,6 +3,5 @@
   ansible.builtin.dnf:
     name:
       - epel-release
-      - epel-next-release
     enablerepo: crb
     state: present
