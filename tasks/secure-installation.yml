@@ -18,11 +18,11 @@
   stat: path="{{ mysql_user_home }}/.my.cnf"
   register: root_password_configured
 
-- name: Update MySQL root password for localhost root account 1.
+- name: Update MySQL root password for localhost root account.
   community.mysql.mysql_user:
     check_implicit_admin: true
     login_user: "root"
-    login_host: "localhost"
+    login_host: "10.0.0.1"
     name: "{{ mysql_root_username }}"
     host: "{{ item }}"
     password: "{{ mysql_root_password }}"
