@@ -1,7 +1,7 @@
 ---
 - name: Ensure MySQL users are present.
   mysql_user:
-    login_host: localhost
+    login_unix_socket: "/var/lib/mysql/mysql.sock"
     config_file: "{{ mysql_user_home}}/.my.cnf"
     name: "{{ item.name }}"
     host: "{{ item.host | default('localhost') }}"
