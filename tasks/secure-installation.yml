@@ -31,7 +31,6 @@
 - name: Update MySQL root password for localhost root account.
   community.mysql.mysql_user:
     login_user: "root"
-    login_password: ""
     login_host: "localhost"
     name: "{{ mysql_root_username }}"
     host: "{{ item }}"
