@@ -22,7 +22,7 @@
   community.mysql.mysql_user:
     check_implicit_admin: true
     login_user: "root"
-    login_host: "10.0.0.1"
+    login_unix_socket: "/var/lib/mysql/mysql.sock"
     name: "{{ mysql_root_username }}"
     host: "{{ item }}"
     password: "{{ mysql_root_password }}"
