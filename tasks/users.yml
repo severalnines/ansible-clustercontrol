@@ -1,8 +1,9 @@
 ---
 - name: Ensure MySQL users are present.
   mysql_user:
-    login_unix_socket: "{{ mysql_unix_socket }}"
     check_implicit_admin: true
+    login_unix_socket: "{{ mysql_unix_socket }}"
+    login_user: root
     config_file: "{{ mysql_user_home}}/.my.cnf"
     name: "{{ item.name }}"
     host: "{{ item.host | default('localhost') }}"
