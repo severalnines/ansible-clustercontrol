@@ -36,3 +36,4 @@ repo_cli_config_path: /etc/yum.repos.d/s9s-tools.repo
 repo_config_url: http://www.severalnines.com/downloads/cmon/s9s-repo.repo
 clustercontrol_cli_repository: http://repo.severalnines.com/s9s-tools/CentOS_8/s9s-tools.repo
 python_mysql: python3-PyMySQL
+mysql_unix_socket: /var/lib/mysql/mysql.sock
