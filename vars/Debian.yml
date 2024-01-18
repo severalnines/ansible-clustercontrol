@@ -33,3 +33,4 @@ repo_config_path: /etc/apt/sources.list.d/s9s-repo.list
 repo_config_url: http://www.severalnines.com/downloads/cmon/s9s-repo.list
 clustercontrol_cli_repository: "deb http://repo.severalnines.com/s9s-tools/{{ ansible_distribution_release }}/ ./"
 clustercontrol_cli_key: "http://repo.severalnines.com/s9s-tools/{{ ansible_distribution_release }}/Release.key"
+mysql_unix_socket: /var/run/mysqld/mysqld.sock

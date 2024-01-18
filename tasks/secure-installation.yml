@@ -21,7 +21,7 @@
 - name: Update MySQL root password for localhost root account.
   community.mysql.mysql_user:
     check_implicit_admin: true
-    login_unix_socket: "/var/lib/mysql/mysql.sock"
+    login_unix_socket: "{{ mysql_unix_socket }}"
     name: "{{ mysql_root_username }}"
     host: "{{ item }}"
     password: "{{ mysql_root_password }}"
@@ -46,7 +46,7 @@
 
 - name: Remove anonymous MySQL users.
   mysql_user:
-    login_unix_socket: "/var/lib/mysql/mysql.sock"
+    login_unix_socket: "{{ mysql_unix_socket }}"
     config_file: "{{ mysql_user_home }}/.my.cnf"
     name: ""
     host: "{{ item }}"
@@ -56,7 +56,7 @@
 
 - name: Remove MySQL test database.
   mysql_db:
-    login_unix_socket: "/var/lib/mysql/mysql.sock"
+    login_unix_socket: "{{ mysql_unix_socket }}"
     login_user: "{{ mysql_root_username }}"
     login_password: "{{ mysql_root_password }}"
     name: "test"
