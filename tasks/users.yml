@@ -1,7 +1,7 @@
 ---
 - name: Ensure MySQL users are present.
   mysql_user:
-    check_implicit_admin: true
+    check_implicit_admin: false
     login_unix_socket: "{{ mysql_unix_socket }}"
     login_user: root
     config_file: "{{ mysql_user_home}}/.my.cnf"
