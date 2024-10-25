@@ -86,13 +86,3 @@
   become: yes
   become_user: "{{ cmon_ssh_user }}"
 
-- name: Import ClusterControl UI database.
-  shell: mysql -u root < {{ apache_doc_root }}/clustercontrol/sql/dc-schema.sql
-  register: ccui_db_import
-  when:
-    ("'Unknown' in dcps_db.stderr") or
-    (rh_clustercontrol_ui_install_packages.changed) or
-    (deb_clustercontrol_ui_install_packages.changed)
-  become: yes
-  become_user: "{{ cmon_ssh_user }}"
-
