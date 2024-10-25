@@ -4,7 +4,7 @@
 # ==============
 
 clustercontrol_ui_packages:
-  - clustercontrol
+  - clustercontrol2
   - clustercontrol-notifications
   - clustercontrol-ssh
   - clustercontrol-cloud
