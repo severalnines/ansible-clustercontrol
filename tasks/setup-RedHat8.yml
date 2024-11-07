@@ -1,3 +1,7 @@
 ---
+- name: Fix AlmaLinux8 GPG key
+  raw: "dnf upgrade almalinux-release --nogpgcheck"
+  when: ansible_os_family == 'AlmaLinux' and ansible_distribution_major_version|int == 9
+  
 - name: Install python3
   raw: "dnf -y install python3"

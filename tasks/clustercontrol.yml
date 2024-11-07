@@ -3,151 +3,151 @@
   stat: path={{ cmon_config_file }}
   register: cmon_cnf
 
-- name: Check if ClusterControl bootstrap file does exist.
-  stat: path={{ ccui_bootstrap }}
-  register: ccui_bs
+# - name: Check if ClusterControl bootstrap file does exist.
+#   stat: path={{ ccui_bootstrap }}
+#   register: ccui_bs
 
-- name: Check if CMON default file exists.
-  stat: path=/etc/default/cmon
-  register: cmon_default
+# - name: Check if CMON default file exists.
+#   stat: path=/etc/default/cmon
+#   register: cmon_default
 
-- name: Copy the CMON default file into /etc/default/cmon.
-  template:
-    src: "cmon.default.j2"
-    dest: "/etc/default/cmon"
-    owner: root
-    group: root
-    mode: 0644
-  when:
-    cmon_default.stat.exists == False
+# - name: Copy the CMON default file into /etc/default/cmon.
+#   template:
+#     src: "cmon.default.j2"
+#     dest: "/etc/default/cmon"
+#     owner: root
+#     group: root
+#     mode: 0644
+#   when:
+#     cmon_default.stat.exists == False
 
-- name: Generate ClusterControl RPC token.
-  shell: "python -c 'import uuid; print uuid.uuid4()' | sha1sum | cut -f1 -d' '"
-  register: api_token
+# - name: Generate ClusterControl RPC token.
+#   shell: "python -c 'import uuid; print uuid.uuid4()' | sha1sum | cut -f1 -d' '"
+#   register: api_token
 
-- name: Retrieve existing ClusterControl RPC token.
-  shell: "grep ^rpc_key {{ cmon_config_file }} | cut -d'=' -f2"
-  register: api_token_retrieved
-  when: cmon_cnf.stat.exists == true
+# - name: Retrieve existing ClusterControl RPC token.
+#   shell: "grep ^rpc_key {{ cmon_config_file }} | cut -d'=' -f2"
+#   register: api_token_retrieved
+#   when: cmon_cnf.stat.exists == true
 
-- name: Define new API token.
-  set_fact:
-    api_rpc_token: "{{ api_token.stdout }}"
-  when: api_token_retrieved.stdout == ""
+# - name: Define new API token.
+#   set_fact:
+#     api_rpc_token: "{{ api_token.stdout }}"
+#   when: api_token_retrieved.stdout == ""
 
-- name: Define existing API token.
-  set_fact:
-    api_rpc_token: "{{ api_token_retrieved.stdout }}"
-  when: api_token_retrieved.stdout != ""
+# - name: Define existing API token.
+#   set_fact:
+#     api_rpc_token: "{{ api_token_retrieved.stdout }}"
+#   when: api_token_retrieved.stdout != ""
 
-- name: Install ClusterControl API token.
-  shell: >
-    mysql -u root -NBe
-    "REPLACE INTO dcps.apis
-    (id, company_id, user_id, url, token)
-    VALUES
-    (1, 1, 1, 'http://127.0.0.1/cmonapi', '{{ api_rpc_token }}')"
-  when:
-    clustercontrol_controller_install_packages and
-    clustercontrol_ui_install_packages
-  become: yes
-  become_user: "{{ cmon_ssh_user }}"
+# - name: Install ClusterControl API token.
+#   shell: >
+#     mysql -u root -NBe
+#     "REPLACE INTO dcps.apis
+#     (id, company_id, user_id, url, token)
+#     VALUES
+#     (1, 1, 1, 'http://127.0.0.1/cmonapi', '{{ api_rpc_token }}')"
+#   when:
+#     clustercontrol_controller_install_packages and
+#     clustercontrol_ui_install_packages
+#   become: yes
+#   become_user: "{{ cmon_ssh_user }}"
 
-- name: Configure ClusterControl admin credentials.
-  shell: >
-    mysql -u root -NBe
-    "SET @salt := (SELECT SUBSTR(CONCAT(MD5(RAND()),MD5(RAND())),1,40));
-    REPLACE INTO dcps.users
-    (id, company_id, email, password, sa, created, salt, uuid, email_verified)
-    VALUES
-    (1, 1, '{{ item.email }}', SHA2(CONCAT(@salt,'{{ item.password }}'),256), 1, unix_timestamp(), @salt, '{{ api_rpc_token }}', 1)"
-  with_items: "{{ cc_admin }}"
-  when:
-    item.email    is defined and
-    item.password is defined and
-    api_rpc_token is defined and
-    item.set
-  become: yes
-  become_user: "{{ cmon_ssh_user }}"
+# - name: Configure ClusterControl admin credentials.
+#   shell: >
+#     mysql -u root -NBe
+#     "SET @salt := (SELECT SUBSTR(CONCAT(MD5(RAND()),MD5(RAND())),1,40));
+#     REPLACE INTO dcps.users
+#     (id, company_id, email, password, sa, created, salt, uuid, email_verified)
+#     VALUES
+#     (1, 1, '{{ item.email }}', SHA2(CONCAT(@salt,'{{ item.password }}'),256), 1, unix_timestamp(), @salt, '{{ api_rpc_token }}', 1)"
+#   with_items: "{{ cc_admin }}"
+#   when:
+#     item.email    is defined and
+#     item.password is defined and
+#     api_rpc_token is defined and
+#     item.set
+#   become: yes
+#   become_user: "{{ cmon_ssh_user }}"
 
-- name: Configure ClusterControl license.
-  shell: >
-    mysql -u root -NBe
-    "REPLACE INTO cmon.license
-    (email, company, exp_date, lickey)
-    VALUES
-    ('{{ item.email }}', '{{ item.company }}', '{{ item.expired_date }}', '{{ item.key }}')"
-  with_items: "{{ cc_license }}"
-  when:
-    item.email        is defined and
-    item.company      is defined and
-    item.expired_date is defined and
-    item.key          is defined and
-    item.set
-  become: yes
-  become_user: "{{ cmon_ssh_user }}"
+# - name: Configure ClusterControl license.
+#   shell: >
+#     mysql -u root -NBe
+#     "REPLACE INTO cmon.license
+#     (email, company, exp_date, lickey)
+#     VALUES
+#     ('{{ item.email }}', '{{ item.company }}', '{{ item.expired_date }}', '{{ item.key }}')"
+#   with_items: "{{ cc_license }}"
+#   when:
+#     item.email        is defined and
+#     item.company      is defined and
+#     item.expired_date is defined and
+#     item.key          is defined and
+#     item.set
+#   become: yes
+#   become_user: "{{ cmon_ssh_user }}"
 
-- name: Configure ClusterControl LDAP settings.
-  shell: >
-    mysql -u root -NBe
-    "REPLACE INTO dcps.ldap_settings
-    (id, enable_ldap_auth, host, port, login, base_dsn, user_dn, group_dn)
-    VALUES
-    (1, {{ item.enabled }}, '{{ item.host }}', '{{ item.port }}', '{{ item.admin_dn }}', '{{ item.base_dn }}', '{{ item.user_dn }}', '{{ item.group_dn }}')"
-  with_items: "{{ cc_ldap }}"
-  when:
-    item.enabled        is defined and
-    item.host           is defined and
-    item.port           is defined and
-    item.admin_dn       is defined and
-    item.admin_password is defined and
-    item.base_dn        is defined and
-    item.user_dn        is defined and
-    item.group_dn       is defined and
-    item.set
-  become: yes
-  become_user: "{{ cmon_ssh_user }}"
+# - name: Configure ClusterControl LDAP settings.
+#   shell: >
+#     mysql -u root -NBe
+#     "REPLACE INTO dcps.ldap_settings
+#     (id, enable_ldap_auth, host, port, login, base_dsn, user_dn, group_dn)
+#     VALUES
+#     (1, {{ item.enabled }}, '{{ item.host }}', '{{ item.port }}', '{{ item.admin_dn }}', '{{ item.base_dn }}', '{{ item.user_dn }}', '{{ item.group_dn }}')"
+#   with_items: "{{ cc_ldap }}"
+#   when:
+#     item.enabled        is defined and
+#     item.host           is defined and
+#     item.port           is defined and
+#     item.admin_dn       is defined and
+#     item.admin_password is defined and
+#     item.base_dn        is defined and
+#     item.user_dn        is defined and
+#     item.group_dn       is defined and
+#     item.set
+#   become: yes
+#   become_user: "{{ cmon_ssh_user }}"
 
-- name: Copy encrypt.php to encrypt LDAP password.
-  template:
-    src: "encrypt.php.j2"
-    dest: "{{ apache_doc_root }}/clustercontrol/app/tools/encrypt.php"
-    owner: "{{ apache_user }}"
-    group: "{{ apache_user }}"
-    mode: 0755
-  with_items: "{{ cc_ldap }}"
-  when:
-    item.set
+# - name: Copy encrypt.php to encrypt LDAP password.
+#   template:
+#     src: "encrypt.php.j2"
+#     dest: "{{ apache_doc_root }}/clustercontrol/app/tools/encrypt.php"
+#     owner: "{{ apache_user }}"
+#     group: "{{ apache_user }}"
+#     mode: 0755
+#   with_items: "{{ cc_ldap }}"
+#   when:
+#     item.set
 
-- name: Read ClusterControl UI encryption key.
-  shell: grep Security.cipherSeed "{{ apache_doc_root }}/clustercontrol/app/Config/core.php" | awk {'print $2'} | tr -d "');"
-  args:
-    executable: /bin/bash
-  register: encryption_key
-  become: yes
-  become_user: "{{ cmon_ssh_user }}"
+# - name: Read ClusterControl UI encryption key.
+#   shell: grep Security.cipherSeed "{{ apache_doc_root }}/clustercontrol/app/Config/core.php" | awk {'print $2'} | tr -d "');"
+#   args:
+#     executable: /bin/bash
+#   register: encryption_key
+#   become: yes
+#   become_user: "{{ cmon_ssh_user }}"
 
-- name: Update ClusterControl LDAP encrypted password.
-  shell: php -q encrypt.php '{{ item.admin_password }}' '{{ encryption_key.stdout }}'
-  args:
-    chdir: "{{ apache_doc_root }}/clustercontrol/app/tools"
-  with_items: "{{ cc_ldap }}"
-  when:
-    item.admin_password is defined and
-    item.set
-  become: yes
-  become_user: "{{ cmon_ssh_user }}"
+# - name: Update ClusterControl LDAP encrypted password.
+#   shell: php -q encrypt.php '{{ item.admin_password }}' '{{ encryption_key.stdout }}'
+#   args:
+#     chdir: "{{ apache_doc_root }}/clustercontrol/app/tools"
+#   with_items: "{{ cc_ldap }}"
+#   when:
+#     item.admin_password is defined and
+#     item.set
+#   become: yes
+#   become_user: "{{ cmon_ssh_user }}"
 
-- name: Copy ClusterControl UI bootstrap file.
-  command: cp "{{ ccui_bootstrap }}.default" {{ ccui_bootstrap }}
-  when: ccui_bs.stat.exists == false
+# - name: Copy ClusterControl UI bootstrap file.
+#   command: cp "{{ ccui_bootstrap }}.default" {{ ccui_bootstrap }}
+#   when: ccui_bs.stat.exists == false
 
-- name: Configure ClusterControl UI - bootstrap.php.
-  shell: sed -i "s|^define('{{ item.param }}'.*|define('{{ item.param }}', '{{ item.value }}');|g" {{ ccui_bootstrap }}
-  with_items:
-    - { param: "DB_PASS", value: "{{ cmon_mysql_password }}" }
-    - { param: "DB_PORT", value: "{{ cmon_mysql_port }}" }
-    - { param: "RPC_TOKEN", value: "{{ api_rpc_token }}" }
+# - name: Configure ClusterControl UI - bootstrap.php.
+#   shell: sed -i "s|^define('{{ item.param }}'.*|define('{{ item.param }}', '{{ item.value }}');|g" {{ ccui_bootstrap }}
+#   with_items:
+#     - { param: "DB_PASS", value: "{{ cmon_mysql_password }}" }
+#     - { param: "DB_PORT", value: "{{ cmon_mysql_port }}" }
+#     - { param: "RPC_TOKEN", value: "{{ api_rpc_token }}" }
 
 - name: Apply correct ownership for ClusterControl UI and CMONAPI (RedHat).
   file:
@@ -174,14 +174,14 @@
     ((ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 7) or
     (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 12))
 
-- name: Ensure bootstrap.php has correct permission.
-  file:
-    path: "{{ apache_doc_root }}/clustercontrol/bootstrap.php"
-    state: file
-    mode: 0644
-    owner: "{{ apache_user }}"
-    group: "{{ apache_user }}"
-  when: ansible_os_family == 'Debian'
+# - name: Ensure bootstrap.php has correct permission.
+#   file:
+#     path: "{{ apache_doc_root }}/clustercontrol/bootstrap.php"
+#     state: file
+#     mode: 0644
+#     owner: "{{ apache_user }}"
+#     group: "{{ apache_user }}"
+#   when: ansible_os_family == 'Debian'
 
 - name: Check if SSH key for user '{{ cmon_ssh_user }}' is exist.
   stat: path={{ cmon_ssh_key_path }}
