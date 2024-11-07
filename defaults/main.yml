@@ -162,3 +162,6 @@ mysql_users:
     host: "127.0.0.1"
     password: "{{ cmon_mysql_password }}"
     priv: '*.*:ALL,GRANT'
+
+# Hostname
+s9s_web_server_host: "{{ ansible_default_ipv4.address }}"
