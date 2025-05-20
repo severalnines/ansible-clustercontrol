@@ -90,14 +90,38 @@
 - name: Updating apt cache if ClusterControl is not yet installed.
   apt: update_cache=yes
 
-- name: Installing latest version of ClusterControl Controller packages.
-  apt: name={{ clustercontrol_controller_packages }} state=latest
+- name: Installing specific version of ClusterControl Controller packages.
+  apt: name="{{ item }}={{ clustercontrol_controller_packages_version | default('*') }}" state=present allow_downgrade=yes
+  with_items: "{{ clustercontrol_controller_packages }}"
   register: deb_clustercontrol_controller_install_packages
 
-- name: Installing latest version of ClusterControl UI packages.
-  apt: name={{ clustercontrol_ui_packages }} state=latest
+- name: Hold ClusterControl Controller packages
+  dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop: "{{ clustercontrol_controller_packages }}"
+  when: clustercontroller_hold_packages is defined and clustercontroller_hold_packages | bool
+
+- name: Installing specific version of ClusterControl UI packages.
+  apt: name="{{ item }}={{ clustercontrol_ui_packages_version | default('*') }}" state=present allow_downgrade=yes
+  with_items: "{{ clustercontrol_ui_packages }}"
   register: deb_clustercontrol_ui_install_packages
 
-- name: Installing latest version of ClusterControl CLI package.
-  apt: name={{ clustercontrol_cli_packages }} state=latest
+- name: Hold ClusterControl UI packages
+  dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop: "{{ clustercontrol_ui_packages }}"
+  when: clustercontroller_hold_packages is defined and clustercontroller_hold_packages | bool
+
+- name: Installing specific version of ClusterControl CLI package.
+  apt: name="{{ item }}={{ clustercontrol_cli_packages_version | default('*') }}" state=present allow_downgrade=yes
+  with_items: "{{ clustercontrol_cli_packages }}"
   register: deb_clustercontrol_cli_install_packages
+
+- name: Hold ClusterControl CLI packages
+  dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  loop: "{{ clustercontrol_cli_packages }}"
+  when: clustercontroller_hold_packages is defined and clustercontroller_hold_packages | bool
