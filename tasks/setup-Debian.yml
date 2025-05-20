@@ -100,7 +100,7 @@
     name: "{{ item }}"
     selection: hold
   loop: "{{ clustercontrol_controller_packages }}"
-  when: clustercontroller_hold_packages is defined and clustercontroller_hold_packages | bool
+  when: clustercontrol_hold_packages is defined and clustercontrol_hold_packages | bool
 
 - name: Installing specific version of ClusterControl UI packages.
   apt: name="{{ item }}={{ clustercontrol_ui_packages_version | default('*') }}" state=present allow_downgrade=yes
@@ -112,7 +112,7 @@
     name: "{{ item }}"
     selection: hold
   loop: "{{ clustercontrol_ui_packages }}"
-  when: clustercontroller_hold_packages is defined and clustercontroller_hold_packages | bool
+  when: clustercontrol_hold_packages is defined and clustercontrol_hold_packages | bool
 
 - name: Installing specific version of ClusterControl CLI package.
   apt: name="{{ item }}={{ clustercontrol_cli_packages_version | default('*') }}" state=present allow_downgrade=yes
@@ -124,4 +124,4 @@
     name: "{{ item }}"
     selection: hold
   loop: "{{ clustercontrol_cli_packages }}"
-  when: clustercontroller_hold_packages is defined and clustercontroller_hold_packages | bool
+  when: clustercontrol_hold_packages is defined and clustercontrol_hold_packages | bool
