@@ -35,6 +35,12 @@
   when: check_mysqld.rc != 0
   notify: start mysql
 
+- name: Installing Ubuntu > 20 PPA PHP repository.
+  shell: add-apt-repository ppa:ondrej/php -y
+  when:
+    (ansible_distribution == 'Debian' and ansible_distribution_major_version|int > 10) or
+    (ansible_distribution == 'Ubuntu' and ansible_distribution_major_version|int > 20)
+
 - name: Checking if Apache is already installed.
   stat: path=/usr/sbin/apachectl
   register: apache_installed
